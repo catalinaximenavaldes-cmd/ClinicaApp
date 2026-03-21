@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Evolución - CliniBienVital</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .textarea-evolucion {
+            width: 100%;
+            height: 300px; /* Más alto para facilitar la escritura */
+            padding: 15px;
+            box-sizing: border-box;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+        .textarea-evolucion:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(52, 73, 94, 0.3);
+        }
+        .paciente-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #34495e;
+        }
+        .btn-guardar {
+            background-color: #27ae60;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: 0.3s;
+        }
+        .btn-guardar:hover { background-color: #219150; }
+        .btn-volver {
+            background-color: #34495e;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="app-header">
+        <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px;"> 
+        <h1>CliniBienVital</h1>
+    </header>
+
+    <div class="main-content">
+        
+        <button class="btn-volver" onclick="window.location.href='lista_pacientes.html'">⬅ Volver al Historial</button>
+        <hr>
+
+        <div class="paciente-box">
+            <strong>Paciente seleccionado:</strong>
+            <div id="nombre-paciente" style="font-size: 20px; color: #2c3e50;">Cargando...</div>
+        </div>
+
+        <h3>Redactar Evolución Clínica</h3>
+        <textarea id="resultado" class="textarea-evolucion" placeholder="Escriba aquí la evolución del paciente, novedades, constantes vitales y plan de tratamiento..."></textarea>
+
+        <button class="btn-guardar" onclick="guardarEvolucion()">💾 Guardar en Ficha Clínica</button>
+
+        <br><br>
+        <button onclick="window.history.back()" style="background: none; border: none; color: #7f8c8d; cursor: pointer; text-decoration: underline;">Cancelar y volver</button>
+    </div>
+
+<script>
+// 1. CARGAR PACIENTE ACTUAL
+let pacienteActual = localStorage.getItem("pacienteActual");
+
+if (pacienteActual) {
+    document.getElementById("nombre-paciente").innerText = "👤 " + pacienteActual;
+} else {
+    alert("Error: No se ha seleccionado un paciente de la lista.");
+    window.location.href = "lista_pacientes.html";
+}
+
+// 2. GUARDAR EN GOOGLE SHEETS
+function guardarEvolucion() {
+    let evolucion = document.getElementById("resultado").value;
+
+    if (!evolucion.trim()) {
+        alert("El campo de evolución está vacío. Por favor, redacte una nota.");
+        return;
+    }
+
+    // Cambiar estado del botón
+    const btn = document.querySelector(".btn-guardar");
+    btn.innerText = "⏳ Guardando...";
+    btn.disabled = true;
+
+    const URL = "https://script.google.com/macros/s/AKfycbySt5_exzy7LIRSNl-IMv-x84ReavV7vv695nS6FeJhURK122Ep63lPTkDeT39Fm5aW/exec";
+
+    // Enviamos los datos al Apps Script
+    // Nota: Mantenemos la estructura de campos vacíos para no romper tu Script de Google
+    fetch(URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            nombre: pacienteActual,
+            accion: "guardar",
+            evolucion: evolucion,
+            // Campos vacíos que el script espera pero que no usamos en esta página libre
+            rut: "",
+            edad: "",
+            direccion: "",
+            telefono: "",
+            correo: ""
+        })
+    })
+    .then(() => {
+        alert("✅ Evolución guardada con éxito en CliniBienVital");
+        window.location.href = "lista_pacientes.html";
+    })
+    .catch(err => {
+        alert("❌ Error al guardar: " + err);
+        btn.innerText = "💾 Guardar en Ficha Clínica";
+        btn.disabled = false;
+    });
+}
+</script>
+
+</body>
+</html>

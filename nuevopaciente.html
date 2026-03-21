@@ -1,0 +1,122 @@
+<!DOCTYPE html> 
+<html lang="es">
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="estilos.css"> 
+    <title>Ingreso paciente - CliniBienVital</title>
+    <style>
+        /* Estilos específicos que tenías para esta página */
+        .btn-inicio { background-color: #34495e; color: white; margin-bottom: 20px; display: block; }
+        .btn-guardar { background-color: #27ae60; color: white; padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-guardar:hover { background-color: #219150; }
+        .container { margin-top: 10px; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+    </style>
+</head>
+
+<body>
+
+    <header class="app-header">
+        <img src="logoclinica.png" alt="logoclinica">
+        <h1>CliniBienVital</h1>
+    </header>
+
+    <div class="main-content">
+        
+        <a href="index.html">
+            <button type="button" class="btn-inicio">🏠 Inicio</button>
+        </a>
+
+        <hr> 
+        
+        <h2>Ingreso de nuevo paciente</h2>
+
+        <div class="container">
+            Nombre y Apellido:<br>
+            <input type="text" id="nombre">
+        </div><br>
+
+        <div class="container">
+            Rut:<br>
+            <input type="text" id="rut">
+        </div><br>
+
+        <div class="container">
+            Edad:<br>
+            <input type="text" id="edad">
+        </div><br>
+
+        <div class="container">
+            Dirección:<br>
+            <input type="text" id="direccion">
+        </div><br>
+
+        <div class="container">
+            Telefono de Contacto:<br>
+            <input type="text" id="telefono">
+        </div><br>
+
+        <div class="container">
+            Correo Electronico:<br>
+            <input type="text" id="correo">
+        </div><br>
+
+        <button onclick="guardarPaciente()" class="btn-guardar">💾 Guardar Paciente</button>
+
+        <br><br>
+
+        <button onclick="window.history.back()" type="button">⬅️ Volver atrás</button>
+    </div>
+
+    <script>
+    function guardarPaciente() {
+        // 1. Capturamos todos los valores (ahora todos dentro de la función)
+        const nombre = document.getElementById("nombre").value;
+        const rut = document.getElementById("rut").value;
+        const edad = document.getElementById("edad").value;
+        const direccion = document.getElementById("direccion").value; 
+        const telefono = document.getElementById("telefono").value;
+        const correo = document.getElementById("correo").value;
+
+        // 2. Validación básica
+        if (!nombre) {
+            alert("Por favor, completa el nombre del paciente.");
+            return;
+        }
+
+        // 3. Preparamos el objeto con los datos
+        const datos = {
+            nombre: nombre,
+            rut: rut,
+            edad: edad,
+            direccion: direccion,
+            telefono: telefono,
+            correo: correo,
+            evolucion: "Ingreso inicial registrado",
+            accion: "guardar"
+        };
+
+        // 4. Tu URL de Google Apps Script (No olvides pegarla aquí)
+        const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbySt5_exzy7LIRSNl-IMv-x84ReavV7vv695nS6FeJhURK122Ep63lPTkDeT39Fm5aW/exec";
+
+        // 5. Envío de datos
+        fetch(URL_APPS_SCRIPT, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        })
+        .then(() => {
+            alert("¡Paciente guardado con éxito!");
+            window.location.href = "index.html"; 
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Error al conectar con la base de datos.");
+        });
+    } // Aquí es donde realmente debe cerrar la función
+</script>
+
+</body>
+</html>
