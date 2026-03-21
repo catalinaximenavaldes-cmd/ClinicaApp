@@ -8,7 +8,6 @@
     <style>
         .agenda-container { max-width: 800px; margin: 0 auto; padding: 20px; }
         
-        /* Contenedor de filtros */
         .filtros-agenda {
             display: flex;
             gap: 10px;
@@ -80,6 +79,20 @@
             padding: 10px;
             border-radius: 8px;
         }
+
+        /* Estilo para el botón de anular */
+        .btn-anular {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 0.75rem;
+            text-decoration: underline;
+            display: block;
+            margin-top: 5px;
+            width: 100%;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -106,18 +119,17 @@
 <script src="url.js"></script>
 <script>
     const URL = CONFIG.API_URL;
-    let vistaActual = 'hoy'; // Estado de la vista: 'hoy' o 'todas'
+    let vistaActual = 'hoy';
     let datosCompletos = [];
 
     const hoyObj = new Date();
-    // Ajuste de fecha para Chile (o tu zona horaria local) para que coincida con el input date
     const hoyISO = hoyObj.toLocaleDateString('en-CA'); 
 
     async function cargarAgenda() {
         try {
             const res = await fetch(URL + "?hoja=Agenda");
             const data = await res.json();
-            datosCompletos = data.slice(1); // Guardamos todas las filas menos cabecera
+            datosCompletos = data.slice(1); 
             renderizarAgenda();
         } catch (error) {
             console.error(error);
@@ -138,12 +150,10 @@
                 const fechaCita = new Date(fila[0]).toLocaleDateString('en-CA');
                 return fechaCita === hoyISO;
             });
-            // Ordenar por hora si es hoy
             listaFiltrada.sort((a, b) => a[1].localeCompare(b[1]));
         } else {
             etiquetaFecha.innerText = "Todas las Citas (Historial)";
             listaFiltrada = [...datosCompletos];
-            // Ordenar por fecha descendente (lo más nuevo arriba)
             listaFiltrada.sort((a, b) => new Date(b[0]) - new Date(a[0]));
         }
 
@@ -165,9 +175,10 @@
                     <b>${paciente}</b>
                     <div class="tratamiento-tag">💉 ${tratamiento}</div>
                 </div>
-                <div>
+                <div style="text-align: right;">
                     ${estado === "Realizado" 
-                        ? '<span class="check-icon">✅ Atendido</span>' 
+                        ? `<span class="check-icon">✅ Atendido</span>
+                           <button class="btn-anular" onclick="confirmarAnulacion('${paciente}', '${tratamiento}')">Anular atención</button>` 
                         : `<button class="btn-atender" onclick="confirmarAtencion(this, '${paciente}', '${tratamiento}')">Atender</button>`}
                 </div>
             `;
@@ -177,7 +188,6 @@
 
     function cambiarVista(vista) {
         vistaActual = vista;
-        // Cambiar estados de botones
         document.getElementById('filtro-hoy').classList.toggle('activo', vista === 'hoy');
         document.getElementById('filtro-todas').classList.toggle('activo', vista === 'todas');
         renderizarAgenda();
@@ -185,27 +195,32 @@
 
     async function confirmarAtencion(btn, paciente, tratamiento) {
         if (!confirm(`¿Confirmar atención de ${paciente}?\n\nEsto actualizará el Stock.`)) return;
-
         btn.innerText = "⏳...";
         btn.disabled = true;
+        ejecutarAccionStock("confirmarAsistenciaDesdeAgenda", paciente, tratamiento);
+    }
 
+    async function confirmarAnulacion(paciente, tratamiento) {
+        if (!confirm(`¿Anular atención de ${paciente}?\n\nLos insumos se devolverán al stock.`)) return;
+        ejecutarAccionStock("anularAtencion", paciente, tratamiento);
+    }
+
+    async function ejecutarAccionStock(accion, paciente, tratamiento) {
         try {
             await fetch(URL, {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify({
-                    accion: "confirmarAsistenciaDesdeAgenda",
+                    accion: accion,
                     paciente: paciente,
                     tratamiento: tratamiento
                 })
             });
-
-            alert(`✅ Stock actualizado.`);
-            cargarAgenda(); // Recargamos para actualizar la vista
+            alert(`✅ Operación exitosa.`);
+            cargarAgenda(); 
         } catch (error) {
-            alert("Error al procesar.");
-            btn.disabled = false;
-            btn.innerText = "Atender";
+            alert("Error al procesar la solicitud.");
+            cargarAgenda();
         }
     }
 
