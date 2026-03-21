@@ -46,6 +46,45 @@
         }
         .flecha { font-size: 12px; transition: 0.3s; }
         .abierto .flecha { transform: rotate(180deg); }
+        
+        .btn-documentos {
+            background: #9b59b6; 
+            color: white; 
+            border: none; 
+            margin-top: 10px; 
+            padding: 12px; 
+            width: 100%; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-documentos:hover { background: #8e44ad; }
+
+        /* ESTILOS NUEVOS PARA LA AGENDA */
+        .card-agendar {
+            background: #f4ecf7;
+            border: 2px solid #9b59b6;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+        .card-agendar h4 { margin: 0 0 10px 0; color: #8e44ad; }
+        .form-agenda { display: flex; flex-direction: column; gap: 8px; }
+        .form-agenda input, .form-agenda select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        .btn-confirmar-cita {
+            background: #8e44ad;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -57,18 +96,17 @@
     </a>
 </header>
 
-    <div class="main-content">
-        <button class="btn-volver" onclick="window.location.href='index.html'">🏠 Inicio</button>
-        <h2 id="titulo-pagina" style="text-align:center;">Pacientes ingresados</h2>
-        <div id="lista">Cargando base de datos...</div>
-        <br>
-        <button id="btnVolverLista" style="display:none;" onclick="location.reload()" class="btn-volver">⬅ Volver a la lista</button>
-    </div>
+<div class="main-content">
+    <button class="btn-volver" onclick="window.location.href='index.html'">🏠 Inicio</button>
+    <h2 id="titulo-pagina" style="text-align:center;">Pacientes ingresados</h2>
+    <div id="lista">Cargando base de datos...</div>
+    <br>
+    <button id="btnVolverLista" style="display:none;" onclick="location.reload()" class="btn-volver">⬅ Volver a la lista</button>
+</div>
 
 <script src="url.js"></script>
 
 <script>
-// 2. Usamos la variable global CONFIG que viene de url.js
 const URL = CONFIG.API_URL;
 let pacientes = {};
 
@@ -90,7 +128,6 @@ fetch(URL)
   })
   .catch(err => {
     document.getElementById("lista").innerHTML = "Error al conectar con la base de datos.";
-    console.error(err);
   });
 
 function mostrarLista() {
@@ -120,17 +157,37 @@ function verPaciente(nombre) {
         <p><strong>📞 Teléfono:</strong> ${perfil.telefono || 'No registrado'}</p>
         <p><strong>📧 Correo:</strong> ${perfil.correo || 'No registrado'}</p>
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        
         <button class="btn-guardar" onclick="window.location.href='evolución.html'">➕ Nueva Evolución</button>
-        <button onclick="altaPaciente('${nombre}')" style="background:#e67e22; color:white; border:none; margin-top:10px; padding:10px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">🏥 Dar de Alta</button>
+        <button class="btn-documentos" onclick="window.location.href='documentos.html'">📄 Recetas y Exámenes</button>
+
+        <div class="card-agendar">
+            <h4>📅 Agendar Próxima Cita</h4>
+            <div class="form-agenda">
+                <input type="date" id="fecha-cita">
+                <input type="time" id="hora-cita">
+                <select id="select-tratamiento-cita">
+                    <option value="">-- Seleccionar Tratamiento --</option>
+                </select>
+                <button class="btn-confirmar-cita" onclick="enviarAAgenda('${nombre}')">Guardar en Agenda</button>
+            </div>
+        </div>
+
+        <button onclick="altaPaciente('${nombre}')" style="background:#e67e22; color:white; border:none; margin-top:15px; padding:10px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">🏥 Dar de Alta</button>
     </div>
     <h4 style="color:#2c3e50;">Historial de Atenciones</h4>
   `;
 
+  document.getElementById("lista").innerHTML = html;
+  
+  // Cargamos los tratamientos en el selector
+  cargarTratamientos();
+
+  // Historial de notas
   registros.forEach((e, index) => {
     let displayStyle = (index === 0) ? "block" : "none";
     let abiertoClase = (index === 0) ? "abierto" : "";
-
-    html += `
+    let notaHtml = `
       <div class="contenedor-acordeon">
           <div class="header-nota ${abiertoClase}" onclick="toggleNota(this)">
               <span>📅 ${e.fecha.toLocaleString()}</span>
@@ -142,9 +199,59 @@ function verPaciente(nombre) {
           </div>
       </div>
     `;
+    document.getElementById("lista").insertAdjacentHTML('beforeend', notaHtml);
   });
+}
 
-  document.getElementById("lista").innerHTML = html;
+// FUNCIONES PARA LA AGENDA COORDINADA
+async function cargarTratamientos() {
+    try {
+        const res = await fetch(URL + "?hoja=Tratamientos");
+        const data = await res.json();
+        const select = document.getElementById("select-tratamiento-cita");
+        for (let i = 1; i < data.length; i++) {
+            let opt = document.createElement("option");
+            opt.value = data[i][0];
+            opt.text = data[i][0];
+            select.add(opt);
+        }
+    } catch(e) { console.error("Error al cargar tratamientos"); }
+}
+
+async function enviarAAgenda(nombrePaciente) {
+    const fecha = document.getElementById("fecha-cita").value;
+    const hora = document.getElementById("hora-cita").value;
+    const tratamiento = document.getElementById("select-tratamiento-cita").value;
+
+    if (!fecha || !hora || !tratamiento) return alert("Por favor, completa fecha, hora y tratamiento.");
+
+    const btn = event.target;
+    btn.innerText = "⏳ Guardando...";
+    btn.disabled = true;
+
+    try {
+        await fetch(URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                accion: "crearCita",
+                fecha: fecha,
+                hora: hora,
+                paciente: nombrePaciente,
+                tratamiento: tratamiento
+            })
+        });
+        alert("✅ Cita coordinada. Aparecerá en la Agenda el día seleccionado.");
+        btn.innerText = "Guardar en Agenda";
+        btn.disabled = false;
+        // Limpiar campos
+        document.getElementById("fecha-cita").value = "";
+        document.getElementById("hora-cita").value = "";
+        document.getElementById("select-tratamiento-cita").value = "";
+    } catch (error) {
+        alert("Error al conectar con la agenda.");
+        btn.disabled = false;
+    }
 }
 
 function toggleNota(elemento) {

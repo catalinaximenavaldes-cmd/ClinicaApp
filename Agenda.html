@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda - CliniBienVital</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .agenda-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        
+        /* Contenedor de filtros */
+        .filtros-agenda {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-filtro {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            background: #ecf0f1;
+            color: #7f8c8d;
+            transition: 0.3s;
+        }
+        .btn-filtro.activo {
+            background: #3498db;
+            color: white;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+        }
+
+        .cita-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-left: 6px solid #3498db;
+            transition: 0.3s;
+        }
+        .cita-info b { font-size: 1.2rem; color: #2c3e50; display: block; }
+        .cita-info span { color: #7f8c8d; font-size: 0.9rem; }
+        .tratamiento-tag {
+            background: #e1f5fe;
+            color: #0288d1;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        .btn-atender {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-atender:hover { background: #219150; transform: scale(1.05); }
+        .btn-atender:disabled { background: #bdc3c7; cursor: not-allowed; }
+        
+        .estado-realizado { border-left-color: #27ae60; background: #f9f9f9; opacity: 0.8; }
+        .check-icon { color: #27ae60; font-weight: bold; font-size: 1.2rem; }
+        
+        .fecha-encabezado {
+            text-align: center;
+            color: #34495e;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <h1>📅 Agenda de Pacientes</h1>
+</header>
+
+<div class="agenda-container">
+    <button class="btn-volver" style="margin-bottom: 20px;" onclick="window.location.href='index.html'">⬅ Volver al Menú</button>
+    
+    <div class="filtros-agenda">
+        <button id="filtro-hoy" class="btn-filtro activo" onclick="cambiarVista('hoy')">Citas de Hoy</button>
+        <button id="filtro-todas" class="btn-filtro" onclick="cambiarVista('todas')">Ver Historial</button>
+    </div>
+
+    <div id="fecha-actual" class="fecha-encabezado"></div>
+
+    <div id="lista-agenda">
+        <p style="text-align: center; color: #7f8c8d;">Cargando citas...</p>
+    </div>
+</div>
+
+<script src="url.js"></script>
+<script>
+    const URL = CONFIG.API_URL;
+    let vistaActual = 'hoy'; // Estado de la vista: 'hoy' o 'todas'
+    let datosCompletos = [];
+
+    const hoyObj = new Date();
+    // Ajuste de fecha para Chile (o tu zona horaria local) para que coincida con el input date
+    const hoyISO = hoyObj.toLocaleDateString('en-CA'); 
+
+    async function cargarAgenda() {
+        try {
+            const res = await fetch(URL + "?hoja=Agenda");
+            const data = await res.json();
+            datosCompletos = data.slice(1); // Guardamos todas las filas menos cabecera
+            renderizarAgenda();
+        } catch (error) {
+            console.error(error);
+            document.getElementById("lista-agenda").innerHTML = "Error al conectar con la base de datos.";
+        }
+    }
+
+    function renderizarAgenda() {
+        const contenedor = document.getElementById("lista-agenda");
+        const etiquetaFecha = document.getElementById("fecha-actual");
+        contenedor.innerHTML = "";
+
+        let listaFiltrada = [];
+
+        if (vistaActual === 'hoy') {
+            etiquetaFecha.innerText = "Citas para hoy: " + hoyObj.toLocaleDateString();
+            listaFiltrada = datosCompletos.filter(fila => {
+                const fechaCita = new Date(fila[0]).toLocaleDateString('en-CA');
+                return fechaCita === hoyISO;
+            });
+            // Ordenar por hora si es hoy
+            listaFiltrada.sort((a, b) => a[1].localeCompare(b[1]));
+        } else {
+            etiquetaFecha.innerText = "Todas las Citas (Historial)";
+            listaFiltrada = [...datosCompletos];
+            // Ordenar por fecha descendente (lo más nuevo arriba)
+            listaFiltrada.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+        }
+
+        if (listaFiltrada.length === 0) {
+            contenedor.innerHTML = `<p style='text-align:center; color:#95a5a6;'>No hay registros en esta vista.</p>`;
+            return;
+        }
+
+        listaFiltrada.forEach(fila => {
+            const [fecha, hora, paciente, tratamiento, estado] = fila;
+            const fechaFormateada = new Date(fecha).toLocaleDateString();
+            
+            const card = document.createElement("div");
+            card.className = "cita-card" + (estado === "Realizado" ? " estado-realizado" : "");
+            
+            card.innerHTML = `
+                <div class="cita-info">
+                    <span>${vistaActual === 'todas' ? '📅 ' + fechaFormateada + ' | ' : ''}🕒 ${hora} hrs</span>
+                    <b>${paciente}</b>
+                    <div class="tratamiento-tag">💉 ${tratamiento}</div>
+                </div>
+                <div>
+                    ${estado === "Realizado" 
+                        ? '<span class="check-icon">✅ Atendido</span>' 
+                        : `<button class="btn-atender" onclick="confirmarAtencion(this, '${paciente}', '${tratamiento}')">Atender</button>`}
+                </div>
+            `;
+            contenedor.appendChild(card);
+        });
+    }
+
+    function cambiarVista(vista) {
+        vistaActual = vista;
+        // Cambiar estados de botones
+        document.getElementById('filtro-hoy').classList.toggle('activo', vista === 'hoy');
+        document.getElementById('filtro-todas').classList.toggle('activo', vista === 'todas');
+        renderizarAgenda();
+    }
+
+    async function confirmarAtencion(btn, paciente, tratamiento) {
+        if (!confirm(`¿Confirmar atención de ${paciente}?\n\nEsto actualizará el Stock.`)) return;
+
+        btn.innerText = "⏳...";
+        btn.disabled = true;
+
+        try {
+            await fetch(URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({
+                    accion: "confirmarAsistenciaDesdeAgenda",
+                    paciente: paciente,
+                    tratamiento: tratamiento
+                })
+            });
+
+            alert(`✅ Stock actualizado.`);
+            cargarAgenda(); // Recargamos para actualizar la vista
+        } catch (error) {
+            alert("Error al procesar.");
+            btn.disabled = false;
+            btn.innerText = "Atender";
+        }
+    }
+
+    window.onload = cargarAgenda;
+</script>
+</body>
+</html>

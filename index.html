@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="estilos.css"> 
     <title>CliniBienVital - Inicio</title>
     <style>
-        /*equeño margen entre los botones para que se vea ordenado */
         .menu-botones button {
             width: 100%;
             padding: 15px;
@@ -16,49 +15,102 @@
             border: none;
             cursor: pointer;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         .btn-nuevo { background-color: #27ae60; color: white; }
         .btn-activos { background-color: #3498db; color: white; }
         .btn-historicos { background-color: #7f8c8d; color: white; }
         
-        .menu-botones button:hover { opacity: 0.9; }
+        /* Nuevo botón para la Agenda */
+        .btn-agenda { background-color: #9b59b6; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* Botón especial para Admin */
+        .btn-admin { background-color: #e67e22; color: white; border: 2px solid #d35400 !important; }
+        
+        .menu-botones button:hover { opacity: 0.9; transform: translateY(-2px); transition: 0.2s; }
+
+        /* Estilos para el cuadro de contraseña */
+        #modal-login {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .login-card {
+            background: white; padding: 30px; border-radius: 12px;
+            text-align: center; width: 90%; max-width: 300px;
+        }
+        .login-card input {
+            width: 100%; padding: 10px; margin: 15px 0;
+            border: 1px solid #ccc; border-radius: 5px; font-size: 18px; text-align: center;
+        }
     </style>
 </head>
 
 <body>
     <header class="app-header">
-        <a href="index.html" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            <img src="logoclinica.png" alt="Logo Clinica" style="height: 50px; cursor: pointer;">  
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="logoclinica.png" alt="Logo Clinica" style="height: 50px;">  
             <h1 style="color: white; margin: 0;">CliniBienVital</h1>
-        </a>
+        </div>
     </header>
 
     <div class="main-content">
-        
-        <h2 style="text-align: center; color: #2c3e50;">Menú principal</h2>
+        <h2 style="text-align: center; color: #2c3e50;">Panel de Control</h2>
 
         <div class="menu-botones" style="margin-top:30px;">
-            <button class="btn-nuevo" onclick="irIngreso()">➕ Ingresar nuevo paciente</button>
-            <button class="btn-activos" onclick="irPacientes()">👥 Ver pacientes</button>
-            <button class="btn-historicos" onclick="irHistoricos()">📁 Historial Pacientes</button>
-        </div>
+            <button class="btn-agenda" onclick="window.location.href='agenda.html'">📅 Agenda</button>
+            <button class="btn-nuevo" onclick="window.location.href='nuevopaciente.html'">➕ Ingresar nuevo paciente</button>
+            <button class="btn-activos" onclick="window.location.href='pacientes.html'">👥 Ver pacientes</button>
+            <button class="btn-historicos" onclick="window.location.href='historicos.html'">📁 Historial Clínico</button>
 
+             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+            <button class="btn-admin" onclick="abrirLogin()">📦 Control de Stock (Admin)</button>
+        </div>
     </div> 
 
+    <div id="modal-login">
+        <div class="login-card">
+            <h3>Acceso Administrador</h3>
+            <p>Introduce tu clave:</p>
+            <input type="password" id="pass-admin" placeholder="****">
+            <button class="btn-activos" style="width:100%" onclick="verificarAdmin()">Entrar</button>
+            <button onclick="cerrarLogin()" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
     <script>
-        function irIngreso() {
-            window.location.href = "nuevopaciente.html";
+        const CLAVE_MAESTRA = "2026"; 
+
+        function abrirLogin() {
+            document.getElementById("modal-login").style.display = "flex";
+            document.getElementById("pass-admin").focus();
         }
 
-        function irPacientes() {
-            window.location.href = "pacientes.html";
+        function cerrarLogin() {
+            document.getElementById("modal-login").style.display = "none";
+            document.getElementById("pass-admin").value = "";
         }
 
-        // Nueva función para el archivo histórico
-        function irHistoricos() {
-            window.location.href = "historicos.html";
+        function verificarAdmin() {
+            const input = document.getElementById("pass-admin").value;
+            if (input === CLAVE_MAESTRA) {
+                localStorage.setItem("rol", "admin");
+                window.location.href = "stock.html";
+            } else {
+                alert("Clave incorrecta. Solo el administrador tiene acceso.");
+                cerrarLogin();
+            }
         }
+
+        // Reseteamos el rol al entrar al index
+        localStorage.setItem("rol", "usuario");
     </script>
-
 </body>
 </html>

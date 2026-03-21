@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Documentos - CliniBienVital</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .selector-doc {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn-doc {
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #3498db;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn-doc:hover { background: #ebf5fb; }
+
+        #contenedor-previa {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px dashed #ccc;
+            text-align: center;
+        }
+        
+        #area-impresion {
+            display: none; 
+            background: white;
+            padding: 50px;
+            font-family: 'Times New Roman', serif;
+            color: #000;
+            text-align: left;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        @media print {
+            body * { display: none !important; }
+            #area-impresion, #area-impresion * { display: block !important; }
+            #area-impresion { 
+                position: absolute; left: 0; top: 0; width: 100%; 
+                box-shadow: none; padding: 40px;
+            }
+        }
+
+        .header-receta { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .footer-receta { margin-top: 50px; border-top: 1px solid #ccc; padding-top: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <h1>CliniBienVital - Documentos</h1>
+</header>
+
+<div class="main-content">
+    <button class="btn-volver" onclick="window.location.href='pacientes.html'">⬅ Volver</button>
+    
+    <div id="info-paciente-cabecera" style="margin: 20px 0; font-weight: bold; color: #2c3e50;">
+        Paciente: <strong id="nombre-display" style="color: #27ae60;">Cargando...</strong>
+    </div>
+
+    <div class="selector-doc" id="menu-inicial">
+        <div class="btn-doc" onclick="generar('RECETA MÉDICA')">💊<br>Generar Receta</div>
+        <div class="btn-doc" onclick="generar('ORDEN DE EXÁMENES')">🔬<br>Orden de Exámenes</div>
+    </div>
+
+    <div id="editor-documento" style="display:none; margin-top:20px;">
+        <h3 id="titulo-redaccion">Redactar</h3>
+        <textarea id="texto-doc" style="width:100%; height:200px; padding:10px; border-radius:8px; font-size: 16px;" placeholder="Escriba las indicaciones aquí..."></textarea>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button id="btn-previa" class="btn-guardar" style="flex: 2;" onclick="previsualizar()">👁️ Ver Vista Previa</button>
+            <button class="btn-volver" style="flex: 1; margin:0; background: #95a5a6;" onclick="location.reload()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="contenedor-previa">
+        <p style="color: #e67e22; font-weight: bold; margin-bottom: 15px;">Vista previa del documento:</p>
+        <div id="visualizador-hoja"></div> 
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+            <button class="btn-guardar" style="background: #27ae60; padding: 15px 30px;" onclick="window.print()">🖨️ Todo correcto, Imprimir</button>
+            <button class="btn-volver" style="background: #34495e;" onclick="volverAEditar()">✏️ Editar texto</button>
+        </div>
+        <p id="status-guardado" style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">💾 Guardando copia en historial...</p>
+    </div>
+</div>
+
+<div id="area-impresion">
+    <div class="header-receta">
+        <div style="float: right; text-align: right;">
+            <h2 style="margin:0;">Dr. Manuel Miguel Diaz Diaz</h2>
+            <p style="margin:0;">RUT: 14.660.564-8</p>
+            <p style="margin:0;">Medico Cirujano - Traumatología y Ortopedia</p>
+        </div>
+        <h1 style="color: #638592; margin:0;">CliniBienVital</h1>
+        <p>Centro de rehabilitación</p>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <h2 id="tipo-doc-titulo" style="text-align:center; text-decoration: underline; text-transform: uppercase;"></h2>
+        <p><strong>Fecha:</strong> <span id="fecha-doc"></span></p>
+        <p><strong>Paciente:</strong> <span id="paciente-doc"></span></p>
+        <p><strong>RUT Paciente:</strong> <span id="rut-doc"></span></p>
+    </div>
+
+    <div id="contenido-doc" style="min-height: 350px; font-size: 18px; line-height: 1.6; white-space: pre-wrap;">
+    </div>
+
+    <div class="footer-receta">
+        <div style="width: 250px; border-top: 1px solid #000; margin: 0 auto 10px auto;"></div>
+        <p>Firma y Timbre Médico</p>
+        <p style="margin-top: 20px;"><small>Documento generado en CliniBienVital</small></p>
+    </div>
+</div>
+
+<script src="url.js"></script>
+<script>
+    const URL = CONFIG.API_URL;
+    const pacienteActual = localStorage.getItem("pacienteActual");
+    let datosCompletosPaciente = { rut: "", edad: "", direccion: "", telefono: "", correo: "" };
+
+    if (!pacienteActual) window.location.href = "pacientes.html";
+    document.getElementById("nombre-display").innerText = pacienteActual;
+
+    // Cargar datos del paciente para asegurar que tenemos el RUT y otros campos
+    fetch(URL)
+        .then(res => res.json())
+        .then(data => {
+            let registro = data.find(fila => fila[1] === pacienteActual);
+            if (registro) {
+                datosCompletosPaciente = {
+                    rut: registro[2] || "",
+                    edad: registro[3] || "",
+                    direccion: registro[4] || "",
+                    telefono: registro[5] || "",
+                    correo: registro[6] || ""
+                };
+            }
+        });
+
+    function generar(tipo) {
+        document.getElementById("menu-inicial").style.display = "none";
+        document.getElementById("tipo-doc-titulo").innerText = tipo;
+        document.getElementById("titulo-redaccion").innerText = "Redactando " + tipo;
+        document.getElementById("editor-documento").style.display = "block";
+        document.getElementById("texto-doc").focus();
+    }
+
+    function previsualizar() {
+        const texto = document.getElementById("texto-doc").value;
+        if (!texto.trim()) return alert("Por favor, escriba el contenido del documento.");
+
+        // Llenar la hoja de impresión
+        document.getElementById("paciente-doc").innerText = pacienteActual;
+        document.getElementById("rut-doc").innerText = datosCompletosPaciente.rut || "No registrado";
+        document.getElementById("fecha-doc").innerText = new Date().toLocaleDateString();
+        document.getElementById("contenido-doc").innerText = texto;
+
+        // Cambiar vistas
+        document.getElementById("editor-documento").style.display = "none";
+        document.getElementById("contenedor-previa").style.display = "block";
+        document.getElementById("area-impresion").style.display = "block";
+
+        // GUARDAR EN GOOGLE SHEETS (Igual que en evolución.html)
+        guardarCopiaAutomatica(texto);
+    }
+
+    function guardarCopiaAutomatica(texto) {
+        const tipoDoc = document.getElementById("tipo-doc-titulo").innerText;
+        const statusMsg = document.getElementById("status-guardado");
+        
+        const datos = {
+            nombre: pacienteActual,
+            accion: "guardar",
+            evolucion: `[${tipoDoc}]\n${texto}`,
+            rut: datosCompletosPaciente.rut,
+            edad: datosCompletosPaciente.edad,
+            direccion: datosCompletosPaciente.direccion,
+            telefono: datosCompletosPaciente.telefono,
+            correo: datosCompletosPaciente.correo
+        };
+
+        fetch(URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        })
+        .then(() => {
+            statusMsg.innerText = "✅ Copia guardada en el historial del paciente.";
+            statusMsg.style.color = "#27ae60";
+        })
+        .catch(err => {
+            console.error("Error al guardar copia:", err);
+            statusMsg.innerText = "⚠️ No se pudo guardar la copia en el historial.";
+            statusMsg.style.color = "#e74c3c";
+        });
+    }
+
+    function volverAEditar() {
+        document.getElementById("contenedor-previa").style.display = "none";
+        document.getElementById("area-impresion").style.display = "none";
+        document.getElementById("editor-documento").style.display = "block";
+        document.getElementById("status-guardado").innerText = "💾 Guardando copia en historial...";
+        document.getElementById("status-guardado").style.color = "#7f8c8d";
+    }
+</script>
+
+</body>
+</html>
