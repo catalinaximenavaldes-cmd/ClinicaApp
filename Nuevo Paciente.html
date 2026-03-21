@@ -1,98 +1,99 @@
 <!DOCTYPE html> 
 <html lang="es">
-
 <head>
-<meta charset="UTF-8"> 
-<link rel="stylesheet" href="estilos.css"> 
-<title>Ingreso paciente</title>
+    <meta charset="UTF-8"> 
+    <link rel="stylesheet" href="estilos.css"> 
+    <title>Ingreso paciente</title>
+    <style>
+        /*estilo rápido para los botones*/
+        .btn-inicio { background-color: #f0f0f0; margin-bottom: 20px; display: block; }
+        .btn-guardar { background-color: #4CAF50; color: white; padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; }
+        .btn-guardar:hover { background-color: #45a049; }
+        .container { margin-top: 10px; }
+    </style>
 </head>
 
 <body>
 
-<h2>Ingreso de paciente</h2>
+    <a href="index.html">
+        <button type="button" class="btn-inicio">🏠 Volver al Menú Principal</button>
+    </a>
 
-<div>
-  Nombre y Apellido:
-  <input type="text" id="nombre">
-</div><br>
+    <hr> <h2>Ingreso de nuevo paciente</h2>
 
-<div>
-  Edad:
-  <input type="text" id="edad">
-</div><br>
+    <div class="container">
+        Nombre y Apellido:<br>
+        <input type="text" id="nombre">
+    </div><br>
 
-<div>
-  Cama:
-  <input type="text" id="cama">
-</div><br>
+    <div class="container">
+        Edad:<br>
+        <input type="text" id="edad">
+    </div><br>
 
-<div>
-  Servicio:
-  <input type="text" id="servicio">
-</div><br>
+    <div class="container">
+        Cama:<br>
+        <input type="text" id="cama">
+    </div><br>
 
-<div>
-  Diagnóstico:
-  <input type="text" id="diagnostico">
-</div><br>
+    <div class="container">
+        Servicio:<br>
+        <input type="text" id="servicio">
+    </div><br>
 
-<button onclick="guardarPaciente()">Guardar paciente</button>
+    <div class="container">
+        Diagnóstico:<br>
+        <input type="text" id="diagnostico">
+    </div><br>
 
-<br><br>
+    <button onclick="guardarPaciente()" class="btn-guardar">💾 Guardar Paciente</button>
 
-<a href="index.html">
-  <button>Inicio</button>
-</a>
+    <br><br>
 
-<script>
+    <button onclick="window.history.back()" type="button">⬅️ Volver atrás</button>
 
-function nuevoPaciente() {
+    <script>
+        function guardarPaciente() {
+            const nombre = document.getElementById("nombre").value;
+            const edad = document.getElementById("edad").value;
+            const cama = document.getElementById("cama").value;
+            const servicio = document.getElementById("servicio").value;
+            const diagnostico = document.getElementById("diagnostico").value;
 
-  let nombre = document.getElementById("nombre").value;
-  let edad = document.getElementById("edad").value;
-  let cama = document.getElementById("cama").value;
-  let servicio = document.getElementById("servicio").value;
-  let diagnostico = document.getElementById("diagnostico").value;
+            if (!nombre) {
+                alert("Por favor, completa el nombre del paciente.");
+                return;
+            }
 
-  let fecha = new Date().toLocaleDateString();
+            const datos = {
+                nombre: nombre,
+                edad: edad,
+                cama: cama,
+                servicio: servicio,
+                diagnostico: diagnostico,
+                evolucion: "Ingreso inicial registrado",
+                accion: "guardar"
+            };
 
-  let texto = "Ingreso paciente\n";
-  texto += "Fecha: " + fecha + "\n\n";
-  texto += "Nombre: " + nombre + "\n";
-  texto += "Edad: " + edad + "\n";
-  texto += "Cama: " + cama + "\n";
-  texto += "Servicio: " + servicio + "\n";
-  texto += "Diagnóstico: " + diagnostico + "\n\n";
+            // URL ACTUALIZADA DE APPS SCRIPT
+            const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbw7uetD7_m1DfNtL3j2Tfrb3vQY1IRy0tA46dBAnn7Aa796WccGzqY0XCdb8HySj_uA/exec";
 
-  document.getElementById("resultado").value = texto;
-}
-
-
-function guardarPaciente() {
-
-  let nombre = document.getElementById("nombre").value;
-  let edad = document.getElementById("edad").value;
-  let cama = document.getElementById("cama").value;
-  let servicio = document.getElementById("servicio").value;
-  let diagnostico = document.getElementById("diagnostico").value;
-  let evolucion = document.getElementById("resultado").value;
-
-  fetch("https://script.google.com/macros/s/AKfycbw7uetD7_m1DfNtL3j2Tfrb3vQY1IRy0tA46dBAnn7Aa796WccGzqY0XCdb8HySj_uA/exec", {
-    method: "POST",
-    body: JSON.stringify({
-      nombre: nombre,
-      edad: edad,
-      cama: cama,
-      servicio: servicio,
-      diagnostico: diagnostico,
-      evolucion: evolucion
-    })
-  })
-  .then(() => alert("Paciente guardado correctamente"))
-  .catch(() => alert("Error al guardar"));
-}
-
-</script>
+            fetch(URL_APPS_SCRIPT, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datos)
+            })
+            .then(() => {
+                alert("¡Paciente guardado con éxito!");
+                window.location.href = "index.html"; 
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error al conectar con la base de datos.");
+            });
+        }
+    </script>
 
 </body>
 </html>
