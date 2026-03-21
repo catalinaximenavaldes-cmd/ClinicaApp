@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Pacientes</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+
+<body>
+
+<h2>Pacientes ingresados</h2>
+
+<div id="lista">Cargando...</div>
+
+<br>
+<button onclick="window.location.href='index.html'">⬅ Volver</button>
+
+<script>
+
+const URL = "https://script.google.com/macros/s/AKfycbw7uetD7_m1DfNtL3j2Tfrb3vQY1IRy0tA46dBAnn7Aa796WccGzqY0XCdb8HySj_uA/exec";
+
+let pacientes = {};
+
+fetch(URL)
+  .then(res => res.json())
+  .then(data => {
+
+    for (let i = 1; i < data.length; i++) {
+      let fila = data[i];
+      let nombre = fila[1];
+
+      if (!pacientes[nombre]) {
+        pacientes[nombre] = [];
+      }
+
+      pacientes[nombre].push({
+        edad: fila[2],
+        cama: fila[3],
+        servicio: fila[4],
+        diagnostico: fila[5],
+        evolucion: fila[6],
+        fecha: new Date(fila[0])
+      });
+    }
+
+    mostrarLista();
+  });
+
+
+// 🧾 LISTA PACIENTES
+function mostrarLista() {
+  let html = "<h3>Pacientes</h3>";
+
+  for (let nombre in pacientes) {
+    html += `
+      <div class="card-paciente"
+           onclick="verPaciente('${nombre}')">
+        👤 ${nombre}
+      </div>
+    `;
+  }
+
+  document.getElementById("lista").innerHTML = html;
+}
+
+
+// 👤 VER PACIENTE
+function verPaciente(nombre) {
+
+  localStorage.setItem("pacienteActual", nombre);
+
+  let evoluciones = pacientes[nombre];
+
+  evoluciones.sort((a, b) => b.fecha - a.fecha);
+
+  let html = `
+    <h3>${nombre}</h3>
+    <button onclick="nuevaEvolucion()">➕ Nueva evolución</button>
+    <button onclick="altaPaciente('${nombre}')">🏥 Alta paciente</button>
+  `;
+
+  evoluciones.forEach((e, index) => {
+    html += `
+      <div class="card-paciente"
+           onclick="verEvolucion('${nombre}', ${index})">
+        📄 Evolución ${index + 1}
+        <br><small>${e.fecha.toLocaleString()}</small>
+      </div>
+    `;
+  });
+
+  html += `<br><button onclick="mostrarLista()">⬅ Volver</button>`;
+
+  document.getElementById("lista").innerHTML = html;
+}
+
+
+// 📄 VER EVOLUCIÓN
+function verEvolucion(nombre, index) {
+
+  let evoluciones = pacientes[nombre];
+  evoluciones.sort((a, b) => b.fecha - a.fecha);
+
+  let e = evoluciones[index];
+
+  let html = `
+    <h3>${nombre}</h3>
+
+    <div class="card-evolucion">
+      <b>Fecha:</b> ${e.fecha.toLocaleString()}<br>
+      <b>Edad:</b> ${e.edad}<br>
+      <b>Cama:</b> ${e.cama}<br>
+      <b>Servicio:</b> ${e.servicio}<br>
+      <b>Diagnóstico:</b> ${e.diagnostico}<br><br>
+      <i>${e.evolucion}</i>
+    </div>
+
+    <br>
+
+    <button onclick="eliminarEvolucion('${nombre}', '${e.fecha.toISOString()}')">
+      🗑️ Eliminar evolución
+    </button>
+
+    <br><br>
+    <button onclick="verPaciente('${nombre}')">⬅ Volver</button>
+  `;
+
+  document.getElementById("lista").innerHTML = html;
+}
+
+
+// 🗑️ ELIMINAR EVOLUCIÓN
+function eliminarEvolucion(nombre, fecha) {
+
+  if (!confirm("¿Eliminar esta evolución?")) return;
+
+  fetch(URL, {
+    method: "POST",
+    body: JSON.stringify({
+      accion: "eliminar",
+      nombre: nombre,
+      fecha: fecha
+    })
+  })
+  .then(() => {
+    alert("Evolución eliminada");
+    location.reload();
+  });
+}
+
+
+// 🏥 ALTA PACIENTE
+function altaPaciente(nombre) {
+
+  if (!confirm("¿Dar alta y borrar paciente completo?")) return;
+
+  fetch(URL, {
+    method: "POST",
+    body: JSON.stringify({
+      accion: "alta",
+      nombre: nombre
+    })
+  })
+  .then(() => {
+    alert("Paciente eliminado");
+    location.reload();
+  });
+}
+
+
+// ➕ NUEVA EVOLUCIÓN
+function nuevaEvolucion() {
+  window.location.href = "evolución.html";
+}
+
+</script>
+
+</body>
+</html>

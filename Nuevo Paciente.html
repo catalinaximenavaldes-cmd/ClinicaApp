@@ -1,0 +1,98 @@
+<!DOCTYPE html> 
+<html lang="es">
+
+<head>
+<meta charset="UTF-8"> 
+<link rel="stylesheet" href="estilos.css"> 
+<title>Ingreso paciente</title>
+</head>
+
+<body>
+
+<h2>Ingreso de paciente</h2>
+
+<div>
+  Nombre y Apellido:
+  <input type="text" id="nombre">
+</div><br>
+
+<div>
+  Edad:
+  <input type="text" id="edad">
+</div><br>
+
+<div>
+  Cama:
+  <input type="text" id="cama">
+</div><br>
+
+<div>
+  Servicio:
+  <input type="text" id="servicio">
+</div><br>
+
+<div>
+  Diagnóstico:
+  <input type="text" id="diagnostico">
+</div><br>
+
+<button onclick="guardarPaciente()">Guardar paciente</button>
+
+<br><br>
+
+<a href="index.html">
+  <button>Inicio</button>
+</a>
+
+<script>
+
+function nuevoPaciente() {
+
+  let nombre = document.getElementById("nombre").value;
+  let edad = document.getElementById("edad").value;
+  let cama = document.getElementById("cama").value;
+  let servicio = document.getElementById("servicio").value;
+  let diagnostico = document.getElementById("diagnostico").value;
+
+  let fecha = new Date().toLocaleDateString();
+
+  let texto = "Ingreso paciente\n";
+  texto += "Fecha: " + fecha + "\n\n";
+  texto += "Nombre: " + nombre + "\n";
+  texto += "Edad: " + edad + "\n";
+  texto += "Cama: " + cama + "\n";
+  texto += "Servicio: " + servicio + "\n";
+  texto += "Diagnóstico: " + diagnostico + "\n\n";
+
+  document.getElementById("resultado").value = texto;
+}
+
+
+function guardarPaciente() {
+
+  let nombre = document.getElementById("nombre").value;
+  let edad = document.getElementById("edad").value;
+  let cama = document.getElementById("cama").value;
+  let servicio = document.getElementById("servicio").value;
+  let diagnostico = document.getElementById("diagnostico").value;
+  let evolucion = document.getElementById("resultado").value;
+
+  fetch("https://script.google.com/macros/s/AKfycbw7uetD7_m1DfNtL3j2Tfrb3vQY1IRy0tA46dBAnn7Aa796WccGzqY0XCdb8HySj_uA/exec", {
+    method: "POST",
+    body: JSON.stringify({
+      nombre: nombre,
+      edad: edad,
+      cama: cama,
+      servicio: servicio,
+      diagnostico: diagnostico,
+      evolucion: evolucion
+    })
+  })
+  .then(() => alert("Paciente guardado correctamente"))
+  .catch(() => alert("Error al guardar"));
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,209 @@
+"hola apestoso ctm"
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="stylesheet" href="estilos.css"> 
+<meta charset="UTF-8"> 
+<title>Evolución Clínica</title>
+</head>
+
+<body>
+
+<h2>Evolución Clínica</h2>
+
+<div>
+  Paciente:
+  <input type="text" id="nombre" readonly>
+</div><br>
+
+<div class="item">
+  HDN
+  <select id="HDN">
+    <option>Estable</option>
+    <option>Inestable</option>
+  </select>
+</div>
+
+<div class="item">
+  Mecanica respiratoria
+  <select id="Mecanicarespiratoria">
+    <option>Buena</option>
+    <option>Mala</option>
+  </select>
+</div>
+
+<div class="item">
+  Novedades
+  <select id="Novedades">
+    <option>No</option>
+    <option>Si</option>
+  </select>
+</div>
+
+<div class="item">
+  Dolor
+  <select id="Dolor">
+    <option>No</option>
+    <option>Sí</option>
+  </select>
+</div>
+
+<div class="item">
+  Nauseas
+  <select id="Nauseas">
+    <option>No</option>
+    <option>Si</option>
+  </select>
+</div>
+
+<div class="item">
+  Disnea
+  <select id="Disnea">
+    <option>No</option>
+    <option>Si</option>
+  </select>
+</div>
+
+<div class="item">
+  Eventos CV
+  <select id="EventosCV">
+    <option>No</option>
+    <option>Si</option>
+  </select>
+</div>
+
+<div class="item">
+  EF
+  <select id="EF" onchange="mostrarEF()">
+    <option>Sin Cambios</option>
+    <option>Alterado</option>
+  </select>
+</div>
+
+<div id="detalleEF" style="display:none;">
+  Detalle alteraciones:
+  <input type="text" id="textoEF">
+</div>
+
+<br>
+
+<button onclick="generarTexto()">Generar evolución</button>
+<button onclick="guardarEvolucion()">Guardar evolución</button>
+<button onclick="copiarTexto()">Copiar texto</button>
+
+<br><br>
+
+<textarea id="resultado" placeholder="Aquí aparecerá la evolución..."></textarea>
+
+<script>
+
+// 🔥 PACIENTE ACTUAL
+let pacienteActual = localStorage.getItem("pacienteActual");
+
+if (pacienteActual) {
+  document.getElementById("nombre").value = pacienteActual;
+} else {
+  alert("No hay paciente seleccionado");
+}
+
+// 👇 MOSTRAR EF
+function mostrarEF() {
+  let valor = document.getElementById("EF").value;
+
+  if (valor === "Alterado") {
+    document.getElementById("detalleEF").style.display = "block";
+  } else {
+    document.getElementById("detalleEF").style.display = "none";
+    document.getElementById("textoEF").value = "";
+  }
+}
+
+// 🧠 GENERAR TEXTO
+function generarTexto() {
+  let positivos = [];
+  let negativos = [];
+
+  function evaluar(id, nombre) {
+    let valor = document.getElementById(id).value;
+    if (valor === "Sí") positivos.push(nombre);
+    if (valor === "Si") positivos.push(nombre);
+    if (valor === "No") negativos.push(nombre);
+  }
+
+  evaluar("Novedades", "Novedades");
+  evaluar("Dolor", "Dolor");
+  evaluar("Nauseas", "Nauseas");
+  evaluar("Disnea", "Disnea");
+  evaluar("EventosCV", "EventosCV");
+
+  let HDN = document.getElementById("HDN").value;
+  let MR = document.getElementById("Mecanicarespiratoria").value;
+
+  let texto = "Paciente en control. ";
+  texto += "HDN " + HDN.toLowerCase() + ". ";
+  texto += "Mecánica respiratoria " + MR.toLowerCase() + ". ";
+
+  if (positivos.length > 0) {
+    texto += "Presenta " + positivos.join(", ") + ". ";
+  }
+
+  if (negativos.length > 0) {
+    texto += "No presenta " + negativos.join(", ") + ". ";
+  }
+
+  let EF = document.getElementById("EF").value;
+  let detalleEF = document.getElementById("textoEF").value;
+
+  if (EF === "Alterado") {
+    texto += "Examen físico alterado: " + detalleEF + ". ";
+  } else {
+    texto += "Examen físico sin cambios. ";
+  }
+
+  document.getElementById("resultado").value = texto;
+}
+
+// 💾 GUARDAR EN GOOGLE SHEETS
+function guardarEvolucion() {
+
+  let nombre = localStorage.getItem("pacienteActual");
+  let evolucion = document.getElementById("resultado").value;
+
+  if (!evolucion) {
+    alert("Primero genera la evolución");
+    return;
+  }
+
+  fetch("https://script.google.com/macros/s/AKfycbw7uetD7_m1DfNtL3j2Tfrb3vQY1IRy0tA46dBAnn7Aa796WccGzqY0XCdb8HySj_uA/exec", {
+    method: "POST",
+    body: JSON.stringify({
+      nombre: nombre,
+      edad: "",
+      cama: "",
+      servicio: "",
+      diagnostico: "",
+      evolucion: evolucion
+    })
+  })
+  .then(() => {
+    alert("Evolución guardada");
+
+    document.getElementById("resultado").value = "";
+
+    window.location.href = "pacientes.html";
+  })
+  .catch(() => alert("Error al guardar"));
+}
+
+// 📋 COPIAR
+function copiarTexto() {
+  let texto = document.getElementById("resultado");
+  texto.select();
+  document.execCommand("copy");
+  alert("Texto copiado");
+}
+
+</script>
+
+</body>
+</html>
