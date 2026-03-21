@@ -6,27 +6,28 @@
     <link rel="stylesheet" href="estilos.css"> 
     <title>Ingreso paciente - CliniBienVital</title>
     <style>
-        /* Estilos específicos*/
-        .btn-inicio { background-color: #34495e; color: white; margin-bottom: 20px; display: block; }
-        .btn-guardar { background-color: #27ae60; color: white; padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-inicio { background-color: #34495e; color: white; margin-bottom: 20px; display: block; border: none; padding: 10px; border-radius: 4px; cursor: pointer; }
+        .btn-guardar { background-color: #27ae60; color: white; padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; width: 100%; font-size: 16px; }
         .btn-guardar:hover { background-color: #219150; }
         .container { margin-top: 10px; }
         input { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        /* Estilo para error visual */
+        .input-error { border: 2px solid #e74c3c !important; background-color: #fdf2f2; }
     </style>
 </head>
 
 <body>
 
     <header class="app-header">
-        <img src="logoclinica.png" alt="logoclinica">
-        <h1>CliniBienVital</h1>
+        <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+            <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;"> 
+            <h1 style="color: white; margin: 0;">CliniBienVital</h1>
+        </a>
     </header>
 
     <div class="main-content">
         
-        <a href="index.html">
-            <button type="button" class="btn-inicio">🏠 Inicio</button>
-        </a>
+        <button type="button" class="btn-inicio" onclick="window.location.href='index.html'">🏠 Inicio</button>
 
         <hr> 
         
@@ -34,73 +35,126 @@
 
         <div class="container">
             Nombre y Apellido:<br>
-            <input type="text" id="nombre">
+            <input type="text" id="nombre" placeholder="Ej: Juan Pérez">
         </div><br>
 
         <div class="container">
-            Rut:<br>
-            <input type="text" id="rut">
+            Rut (sin puntos y con guion):<br>
+            <input type="text" id="rut" placeholder="12345678-9" oninput="formatearRut(this)">
         </div><br>
 
         <div class="container">
             Edad:<br>
-            <input type="text" id="edad">
+            <input type="number" id="edad" placeholder="Ej: 30">
         </div><br>
 
         <div class="container">
             Dirección:<br>
-            <input type="text" id="direccion">
+            <input type="text" id="direccion" placeholder="Calle Falsa 123">
         </div><br>
 
         <div class="container">
             Telefono de Contacto:<br>
-            <input type="text" id="telefono">
+            <input type="text" id="telefono" placeholder="+569...">
         </div><br>
 
         <div class="container">
             Correo Electronico:<br>
-            <input type="text" id="correo">
+            <input type="email" id="correo" placeholder="ejemplo@correo.com">
         </div><br>
 
         <button onclick="guardarPaciente()" class="btn-guardar">💾 Guardar Paciente</button>
 
         <br><br>
-
-        <button onclick="window.history.back()" type="button">⬅️ Volver atrás</button>
+        <button onclick="window.history.back()" type="button" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#7f8c8d;">⬅️ Volver atrás</button>
     </div>
 
-    <script>
+<script src="url.js"></script>
+
+<script>
+    // --- 1. FORMATEADOR DE RUT (Evita puntos, pone el guion) ---
+    function formatearRut(input) {
+        let valor = input.value.replace(/[^0-9kK]/g, ''); // Quita todo lo que no sea número o K
+        if (valor.length > 1) {
+            let cuerpo = valor.slice(0, -1);
+            let dv = valor.slice(-1).toLowerCase();
+            input.value = cuerpo + '-' + dv;
+        }
+    }
+
+    // --- 2. VALIDOR DE RUT (Módulo 11) ---
+    function esRutValido(rut) {
+        if (!/^[0-9]+[-|‐][0-9kK]{1}$/.test(rut)) return false;
+        let tmp = rut.split('-');
+        let digv = tmp[1].toLowerCase(); 
+        let cuerpo = tmp[0];
+        let suma = 0;
+        let multiplo = 2;
+        for (let i = 1; i <= cuerpo.length; i++) {
+            suma += multiplo * cuerpo.charAt(cuerpo.length - i);
+            multiplo = (multiplo < 7) ? multiplo + 1 : 2;
+        }
+        let dvEsperado = 11 - (suma % 11);
+        dvEsperado = (dvEsperado == 11) ? 0 : (dvEsperado == 10) ? "k" : dvEsperado;
+        return dvEsperado == digv;
+    }
+
+    // --- 3. VALIDADOR DE CORREO ---
+    function esCorreoValido(correo) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+    }
+
+    // --- 4. FUNCIÓN GUARDAR ---
     function guardarPaciente() {
-        //Capturar todos los valores
-        const nombre = document.getElementById("nombre").value;
-        const rut = document.getElementById("rut").value;
+        // Capturar elementos
+        const inputNombre = document.getElementById("nombre");
+        const inputRut = document.getElementById("rut");
+        const inputCorreo = document.getElementById("correo");
+
+        // Capturar valores
+        const nombre = inputNombre.value.trim();
+        const rut = inputRut.value.trim();
         const edad = document.getElementById("edad").value;
         const direccion = document.getElementById("direccion").value; 
         const telefono = document.getElementById("telefono").value;
-        const correo = document.getElementById("correo").value;
+        const correo = inputCorreo.value.trim();
 
-        //Validación básica
+        // Resetear errores visuales
+        [inputNombre, inputRut, inputCorreo].forEach(el => el.classList.remove("input-error"));
+
+        // VALIDACIONES
         if (!nombre) {
-            alert("Por favor, completa el nombre del paciente.");
+            alert("El nombre es obligatorio.");
+            inputNombre.classList.add("input-error");
             return;
         }
 
-        //objeto con los datos
+        if (!esRutValido(rut)) {
+            alert("El RUT ingresado no es válido o no tiene el formato (12345678-9).");
+            inputRut.classList.add("input-error");
+            return;
+        }
+
+        if (correo && !esCorreoValido(correo)) {
+            alert("El formato del correo electrónico es incorrecto.");
+            inputCorreo.classList.add("input-error");
+            return;
+        }
+
+        // Si todo está ok, preparar envío
+        const btn = document.querySelector(".btn-guardar");
+        btn.innerText = "⏳ Guardando...";
+        btn.disabled = true;
+
         const datos = {
-            nombre: nombre,
-            rut: rut,
-            edad: edad,
-            direccion: direccion,
-            telefono: telefono,
-            correo: correo,
+            nombre, rut, edad, direccion, telefono, correo,
             evolucion: "Ingreso inicial registrado",
             accion: "guardar"
         };
 
-        //Tu URL de Google Apps Script
-        const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbySt5_exzy7LIRSNl-IMv-x84ReavV7vv695nS6FeJhURK122Ep63lPTkDeT39Fm5aW/exec";
+        // NUEVO: Ahora usamos la variable del config.js en lugar del link largo
+        const URL_APPS_SCRIPT = CONFIG.API_URL;
 
-        //Envío de datos
         fetch(URL_APPS_SCRIPT, {
             method: "POST",
             mode: "no-cors",
@@ -108,12 +162,14 @@
             body: JSON.stringify(datos)
         })
         .then(() => {
-            alert("¡Paciente guardado con éxito!");
+            alert("✅ Paciente guardado con éxito!");
             window.location.href = "index.html"; 
         })
         .catch(error => {
             console.error("Error:", error);
             alert("Error al conectar con la base de datos.");
+            btn.innerText = "💾 Guardar Paciente";
+            btn.disabled = false;
         });
     }
 </script>

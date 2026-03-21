@@ -50,10 +50,12 @@
 </head>
 <body>
 
-    <header class="app-header">
-        <img src="logoclinica.png" alt="Logo CliniBienVital">
-        <h1>CliniBienVital</h1>
-    </header>
+<header class="app-header">
+    <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+        <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;"> 
+        <h1 style="color: white; margin: 0;">CliniBienVital</h1>
+    </a>
+</header>
 
     <div class="main-content">
         <button class="btn-volver" onclick="window.location.href='index.html'">🏠 Inicio</button>
@@ -63,8 +65,11 @@
         <button id="btnVolverLista" style="display:none;" onclick="location.reload()" class="btn-volver">⬅ Volver a la lista</button>
     </div>
 
+<script src="url.js"></script>
+
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbySt5_exzy7LIRSNl-IMv-x84ReavV7vv695nS6FeJhURK122Ep63lPTkDeT39Fm5aW/exec";
+// 2. Usamos la variable global CONFIG que viene de url.js
+const URL = CONFIG.API_URL;
 let pacientes = {};
 
 fetch(URL)
@@ -82,6 +87,10 @@ fetch(URL)
       });
     }
     mostrarLista();
+  })
+  .catch(err => {
+    document.getElementById("lista").innerHTML = "Error al conectar con la base de datos.";
+    console.error(err);
   });
 
 function mostrarLista() {
@@ -95,9 +104,7 @@ function mostrarLista() {
 }
 
 function verPaciente(nombre) {
-  // CRUCIAL: Guardamos el nombre en la memoria antes de cualquier otra cosa
   localStorage.setItem("pacienteActual", nombre);
-
   document.getElementById("btnVolverLista").style.display = "block";
   document.getElementById("titulo-pagina").innerText = "Expediente Completo";
   
@@ -143,20 +150,28 @@ function verPaciente(nombre) {
 function toggleNota(elemento) {
     elemento.classList.toggle("abierto");
     let contenido = elemento.nextElementSibling;
-    contenido.style.display = (contenido.style.display === "block") ? "none" : "block";
+    if (contenido) {
+        contenido.style.display = (contenido.style.display === "block") ? "none" : "block";
+    }
 }
 
 function eliminarNota(nombre, fecha) {
   if (confirm("¿Borrar esta evolución?")) {
-    fetch(URL, {method: "POST", mode: "no-cors", body: JSON.stringify({accion: "eliminar", nombre: nombre, fecha: fecha})})
-    .then(() => location.reload());
+    fetch(URL, {
+        method: "POST", 
+        mode: "no-cors", 
+        body: JSON.stringify({accion: "eliminar", nombre: nombre, fecha: fecha})
+    }).then(() => location.reload());
   }
 }
 
 function altaPaciente(nombre) {
-  if (confirm("¿Dar de alta? Se borrará todo el historial.")) {
-    fetch(URL, {method: "POST", mode: "no-cors", body: JSON.stringify({accion: "alta", nombre: nombre})})
-    .then(() => location.reload());
+  if (confirm("¿Dar de alta? El historial se moverá al archivo histórico.")) {
+    fetch(URL, {
+        method: "POST", 
+        mode: "no-cors", 
+        body: JSON.stringify({accion: "alta", nombre: nombre})
+    }).then(() => location.reload());
   }
 }
 </script>

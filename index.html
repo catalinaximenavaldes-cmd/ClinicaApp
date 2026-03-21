@@ -5,24 +5,47 @@
     <meta charset="UTF-8"> 
     <link rel="stylesheet" href="estilos.css"> 
     <title>CliniBienVital - Inicio</title>
+    <style>
+        /*equeño margen entre los botones para que se vea ordenado */
+        .menu-botones button {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-nuevo { background-color: #27ae60; color: white; }
+        .btn-activos { background-color: #3498db; color: white; }
+        .btn-historicos { background-color: #7f8c8d; color: white; }
+        
+        .menu-botones button:hover { opacity: 0.9; }
+    </style>
 </head>
 
 <body>
     <header class="app-header">
-        <img src="logoclinica.png" alt="Logo CLinica">  
-        <h1>CliniBienVital</h1>
+        <a href="index.html" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="logoclinica.png" alt="Logo Clinica" style="height: 50px; cursor: pointer;">  
+            <h1 style="color: white; margin: 0;">CliniBienVital</h1>
+        </a>
     </header>
 
     <div class="main-content">
         
-        <h2>Menú principal</h2>
+        <h2 style="text-align: center; color: #2c3e50;">Menú principal</h2>
 
-        <div style="margin-top:20px;">
-            <button onclick="irIngreso()">➕ Generar nuevo paciente</button>
-            <button onclick="irPacientes()">👥 Ver pacientes</button>
+        <div class="menu-botones" style="margin-top:30px;">
+            <button class="btn-nuevo" onclick="irIngreso()">➕ Ingresar nuevo paciente</button>
+            <button class="btn-activos" onclick="irPacientes()">👥 Ver pacientes</button>
+            <button class="btn-historicos" onclick="irHistoricos()">📁 Historial Pacientes</button>
         </div>
 
-    </div> <script>
+    </div> 
+
+    <script>
         function irIngreso() {
             window.location.href = "nuevopaciente.html";
         }
@@ -31,6 +54,10 @@
             window.location.href = "pacientes.html";
         }
 
+        // Nueva función para el archivo histórico
+        function irHistoricos() {
+            window.location.href = "historicos.html";
+        }
     </script>
 
 </body>

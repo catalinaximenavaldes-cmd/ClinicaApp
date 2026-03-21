@@ -38,8 +38,10 @@
 <body>
 
     <header class="app-header">
-        <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px;"> 
-        <h1>CliniBienVital</h1>
+        <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+            <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;"> 
+            <h1 style="color: white; margin: 0;">CliniBienVital</h1>
+        </a>
     </header>
 
     <div class="main-content">
@@ -62,8 +64,11 @@
         <button onclick="window.history.back()" style="background: none; border: none; color: #7f8c8d; cursor: pointer; text-decoration: underline;">Cancelar y volver</button>
     </div>
 
+<script src="url.js"></script>
+
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbySt5_exzy7LIRSNl-IMv-x84ReavV7vv695nS6FeJhURK122Ep63lPTkDeT39Fm5aW/exec";
+// Usamos la constante del archivo url.js
+const URL = CONFIG.API_URL;
 let pacienteActual = localStorage.getItem("pacienteActual");
 
 if (!pacienteActual) {
@@ -74,34 +79,35 @@ if (!pacienteActual) {
     cargarDatosPaciente();
 }
 
-//BUSCAR DATOS DEL PACIENTE PARA MOSTRARLOS
+// BUSCAR DATOS DEL PACIENTE PARA MOSTRARLOS
 function cargarDatosPaciente() {
     fetch(URL)
     .then(res => res.json())
     .then(data => {
-        //fila que coincida con el nombre seleccionado
+        // Buscamos la primera fila donde el nombre (columna 1) coincida
         let registro = data.find(fila => fila[1] === pacienteActual);
+        
         if (registro) {
             document.getElementById("detalles-paciente").innerHTML = `
                 🆔 <b>Rut:</b> ${registro[2] || 'N/A'} | 🎂 <b>Edad:</b> ${registro[3]} años <br>
                 🏠 <b>Dirección:</b> ${registro[4] || 'N/A'}
             `;
         } else {
-            document.getElementById("detalles-paciente").innerText = "No se encontraron datos adicionales.";
+            document.getElementById("detalles-paciente").innerText = "No se encontraron datos básicos del paciente.";
         }
     })
     .catch(err => {
         console.error("Error al cargar datos:", err);
-        document.getElementById("detalles-paciente").innerText = "Error al conectar con la base de datos.";
+        document.getElementById("detalles-paciente").innerText = "Error de conexión con la base de datos.";
     });
 }
 
-//GUARDAR EVOLUCIÓN
+// GUARDAR EVOLUCIÓN
 function guardarEvolucion() {
     let evolucion = document.getElementById("resultado").value;
 
     if (!evolucion.trim()) {
-        alert("El campo de evolución está vacío.");
+        alert("Por favor, redacte la evolución antes de guardar.");
         return;
     }
 
@@ -109,24 +115,27 @@ function guardarEvolucion() {
     btn.innerText = "⏳ Guardando en ficha...";
     btn.disabled = true;
 
-    //Enviar solo el nombre y la evolución
+    // Enviamos el objeto con la estructura que espera tu Google Apps Script
+    const datos = {
+        nombre: pacienteActual,
+        accion: "guardar",
+        evolucion: evolucion,
+        // Campos opcionales que el script podría intentar leer
+        rut: "", edad: "", direccion: "", telefono: "", correo: ""
+    };
+
     fetch(URL, {
         method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-            nombre: pacienteActual,
-            accion: "guardar",
-            evolucion: evolucion,
-            // Mandamos vacíos estos para cumplir con estructura de Google Script
-            rut: "", edad: "", direccion: "", telefono: "", correo: ""
-        })
+        mode: "no-cors", // Importante para Google Apps Script
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
     })
     .then(() => {
         alert("✅ Evolución guardada correctamente.");
         window.location.href = "pacientes.html";
     })
     .catch(err => {
-        alert("❌ Error: " + err);
+        alert("❌ Error al guardar: " + err);
         btn.innerText = "💾 Guardar en Ficha Clínica";
         btn.disabled = false;
     });
