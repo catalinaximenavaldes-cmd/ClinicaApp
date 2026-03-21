@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="estilos.css"> 
     <title>Ingreso paciente - CliniBienVital</title>
     <style>
-        /* Estilos específicos que tenías para esta página */
+        /* Estilos específicos*/
         .btn-inicio { background-color: #34495e; color: white; margin-bottom: 20px; display: block; }
         .btn-guardar { background-color: #27ae60; color: white; padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
         .btn-guardar:hover { background-color: #219150; }
@@ -71,7 +71,7 @@
 
     <script>
     function guardarPaciente() {
-        // 1. Capturamos todos los valores (ahora todos dentro de la función)
+        //Capturar todos los valores
         const nombre = document.getElementById("nombre").value;
         const rut = document.getElementById("rut").value;
         const edad = document.getElementById("edad").value;
@@ -79,13 +79,13 @@
         const telefono = document.getElementById("telefono").value;
         const correo = document.getElementById("correo").value;
 
-        // 2. Validación básica
+        //Validación básica
         if (!nombre) {
             alert("Por favor, completa el nombre del paciente.");
             return;
         }
 
-        // 3. Preparamos el objeto con los datos
+        //objeto con los datos
         const datos = {
             nombre: nombre,
             rut: rut,
@@ -97,10 +97,10 @@
             accion: "guardar"
         };
 
-        // 4. Tu URL de Google Apps Script (No olvides pegarla aquí)
+        //Tu URL de Google Apps Script
         const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbySt5_exzy7LIRSNl-IMv-x84ReavV7vv695nS6FeJhURK122Ep63lPTkDeT39Fm5aW/exec";
 
-        // 5. Envío de datos
+        //Envío de datos
         fetch(URL_APPS_SCRIPT, {
             method: "POST",
             mode: "no-cors",
@@ -115,7 +115,7 @@
             console.error("Error:", error);
             alert("Error al conectar con la base de datos.");
         });
-    } // Aquí es donde realmente debe cerrar la función
+    }
 </script>
 
 </body>

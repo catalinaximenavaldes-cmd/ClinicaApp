@@ -20,7 +20,6 @@
         <div style="margin-top:20px;">
             <button onclick="irIngreso()">➕ Generar nuevo paciente</button>
             <button onclick="irPacientes()">👥 Ver pacientes</button>
-            <button onclick="irEvolucion()">📝 Generar evolución</button>
         </div>
 
     </div> <script>
@@ -32,14 +31,6 @@
             window.location.href = "pacientes.html";
         }
 
-        function irEvolucion() {
-            let paciente = localStorage.getItem("pacienteActual");
-            if (!paciente) {
-                alert("Primero selecciona un paciente en la lista");
-            } else {
-                window.location.href = "evolución.html";
-            }
-        }
     </script>
 
 </body>

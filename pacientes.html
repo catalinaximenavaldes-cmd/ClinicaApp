@@ -14,7 +14,6 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-
         .perfil-paciente p {
             margin: 8px 0;
             font-size: 0.95rem;
@@ -22,7 +21,6 @@
             border-bottom: 1px solid #f1f1f1;
             padding-bottom: 4px;
         }
-
         .header-nota {
             background: #fff;
             padding: 15px;
@@ -36,7 +34,6 @@
             cursor: pointer;
             font-weight: bold;
         }
-
         .contenido-nota {
             display: none;
             background: #fdfdfd;
@@ -47,7 +44,6 @@
             margin-bottom: 10px;
             line-height: 1.6;
         }
-
         .flecha { font-size: 12px; transition: 0.3s; }
         .abierto .flecha { transform: rotate(180deg); }
     </style>
@@ -99,11 +95,13 @@ function mostrarLista() {
 }
 
 function verPaciente(nombre) {
+  // CRUCIAL: Guardamos el nombre en la memoria antes de cualquier otra cosa
+  localStorage.setItem("pacienteActual", nombre);
+
   document.getElementById("btnVolverLista").style.display = "block";
   document.getElementById("titulo-pagina").innerText = "Expediente Completo";
   
   let registros = [...pacientes[nombre]].sort((a,b) => b.fecha - a.fecha);
-  // El perfil se saca del primer registro histórico (el más antiguo)
   let perfil = [...pacientes[nombre]].sort((a,b) => a.fecha - b.fecha)[0];
 
   let html = `
