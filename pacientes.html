@@ -3,203 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Pacientes - CliniBienVital</title>
+    <title>Historial Clínico - CliniBienVital</title>
     <link rel="stylesheet" href="estilos.css">
     <style>
-        /* Estilos rápidos para las fichas de pacientes */
-        .card-paciente {
-            background: #fff;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: 0.3s;
-            border-left: 5px solid #2c3e50;
-        }
-        .card-paciente:hover { background: #f1f1f1; }
-        .card-evolucion {
+        .perfil-paciente {
             background: white;
             padding: 20px;
-            border-radius: 10px;
-            text-align: left;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            border: 2px solid #27ae60;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .btn-alta { background-color: #e67e22; color: white; margin-left: 10px; }
-        .btn-nueva { background-color: #27ae60; color: white; }
+
+        .perfil-paciente p {
+            margin: 8px 0;
+            font-size: 0.95rem;
+            color: #34495e;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 4px;
+        }
+
+        .header-nota {
+            background: #fff;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #bdc3c7;
+            border-left: 8px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .contenido-nota {
+            display: none;
+            background: #fdfdfd;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .flecha { font-size: 12px; transition: 0.3s; }
+        .abierto .flecha { transform: rotate(180deg); }
     </style>
 </head>
-
 <body>
 
     <header class="app-header">
-        <img src="logoclinica.png" alt="logoclinica">
+        <img src="logoclinica.png" alt="Logo CliniBienVital">
         <h1>CliniBienVital</h1>
     </header>
 
     <div class="main-content">
-        
-        <a href="index.html">
-            <button type="button" style="margin-bottom: 20px; background-color: #2c3e50; color: white;">🏠 Inicio</button>
-        </a>
-        <hr>
-
-        <h2 id="titulo-pagina">Pacientes ingresados</h2>
-
-        <div id="lista">Cargando datos desde la nube...</div>
-
+        <button class="btn-volver" onclick="window.location.href='index.html'">🏠 Inicio</button>
+        <h2 id="titulo-pagina" style="text-align:center;">Pacientes ingresados</h2>
+        <div id="lista">Cargando base de datos...</div>
         <br>
-        <button id="btnVolverGeneral" onclick="window.location.href='index.html'">⬅ Volver al Menú</button>
+        <button id="btnVolverLista" style="display:none;" onclick="location.reload()" class="btn-volver">⬅ Volver a la lista</button>
     </div>
 
 <script>
-// URL de tu Apps Script (Asegúrate de que sea la última versión publicada)
 const URL = "https://script.google.com/macros/s/AKfycbySt5_exzy7LIRSNl-IMv-x84ReavV7vv695nS6FeJhURK122Ep63lPTkDeT39Fm5aW/exec";
-
 let pacientes = {};
 
-// 1. CARGAR DATOS
 fetch(URL)
   .then(res => res.json())
   .then(data => {
-    pacientes = {}; 
-    // Empezamos en i = 1 para saltar los encabezados de la hoja
+    pacientes = {};
     for (let i = 1; i < data.length; i++) {
       let fila = data[i];
       let nombre = fila[1]; 
-      
-      if (!pacientes[nombre]) {
-        pacientes[nombre] = [];
-      }
-      
-      // Mapeo según el nuevo orden de columnas: A:Fecha, B:Nombre, C:Rut, D:Edad, E:Dir, F:Tel, G:Correo, H:Evo
+      if (!pacientes[nombre]) pacientes[nombre] = [];
       pacientes[nombre].push({
         fecha: new Date(fila[0]),
-        rut: fila[2],
-        edad: fila[3],
-        direccion: fila[4],
-        telefono: fila[5],
-        correo: fila[6],
-        evolucion: fila[7]
+        rut: fila[2], edad: fila[3], direccion: fila[4],
+        telefono: fila[5], correo: fila[6], evolucion: fila[7]
       });
     }
     mostrarLista();
-  })
-  .catch(err => {
-      document.getElementById("lista").innerHTML = "Error al cargar los datos. Verifica la conexión.";
-      console.error(err);
   });
 
-// 🧾 MOSTRAR LISTA DE NOMBRES
 function mostrarLista() {
+  document.getElementById("btnVolverLista").style.display = "none";
   document.getElementById("titulo-pagina").innerText = "Pacientes ingresados";
-  document.getElementById("btnVolverGeneral").style.display = "block";
-  
   let html = "";
-  if (Object.keys(pacientes).length === 0) {
-      html = "<p>No hay pacientes registrados.</p>";
-  } else {
-      for (let nombre in pacientes) {
-        html += `
-          <div class="card-paciente" onclick="verPaciente('${nombre}')">
-            👤 <b>${nombre}</b>
-          </div>
-        `;
-      }
+  for (let nombre in pacientes) {
+    html += `<div class="card-paciente" onclick="verPaciente('${nombre}')">👤 ${nombre}</div>`;
   }
-  document.getElementById("lista").innerHTML = html;
+  document.getElementById("lista").innerHTML = html || "<p>No hay pacientes.</p>";
 }
 
-// 👤 VER HISTORIAL DEL PACIENTE
 function verPaciente(nombre) {
-  document.getElementById("btnVolverGeneral").style.display = "none";
-  document.getElementById("titulo-pagina").innerText = "Historial Clínico";
+  document.getElementById("btnVolverLista").style.display = "block";
+  document.getElementById("titulo-pagina").innerText = "Expediente Completo";
   
-  localStorage.setItem("pacienteActual", nombre);
-  let registros = pacientes[nombre];
-
-  // Ordenar: Más reciente primero
-  registros.sort((a, b) => b.fecha - a.fecha);
+  let registros = [...pacientes[nombre]].sort((a,b) => b.fecha - a.fecha);
+  // El perfil se saca del primer registro histórico (el más antiguo)
+  let perfil = [...pacientes[nombre]].sort((a,b) => a.fecha - b.fecha)[0];
 
   let html = `
-    <div style="background:#ecf0f1; padding:15px; border-radius:8px; margin-bottom:20px;">
-        <h3>${nombre}</h3>
-        <button class="btn-nueva" onclick="nuevaEvolucion()">➕ Nueva evolución</button>
-        <button class="btn-alta" onclick="altaPaciente('${nombre}')">🏥 Alta paciente</button>
+    <div class="perfil-paciente">
+        <h3 style="margin-top:0; color:#27ae60;">Ficha: ${nombre}</h3>
+        <p><strong>🆔 Rut:</strong> ${perfil.rut || 'No registrado'}</p>
+        <p><strong>🎂 Edad:</strong> ${perfil.edad} años</p>
+        <p><strong>🏠 Dirección:</strong> ${perfil.direccion || 'No registrada'}</p>
+        <p><strong>📞 Teléfono:</strong> ${perfil.telefono || 'No registrado'}</p>
+        <p><strong>📧 Correo:</strong> ${perfil.correo || 'No registrado'}</p>
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <button class="btn-guardar" onclick="window.location.href='evolución.html'">➕ Nueva Evolución</button>
+        <button onclick="altaPaciente('${nombre}')" style="background:#e67e22; color:white; border:none; margin-top:10px; padding:10px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">🏥 Dar de Alta</button>
     </div>
+    <h4 style="color:#2c3e50;">Historial de Atenciones</h4>
   `;
 
-  let total = registros.length;
   registros.forEach((e, index) => {
-    let num = total - index; 
+    let displayStyle = (index === 0) ? "block" : "none";
+    let abiertoClase = (index === 0) ? "abierto" : "";
+
     html += `
-      <div class="card-paciente" onclick="verDetalle('${nombre}', ${index})">
-        📄 Evolución ${num} <br>
-        <small>📅 ${e.fecha.toLocaleString()}</small>
+      <div class="contenedor-acordeon">
+          <div class="header-nota ${abiertoClase}" onclick="toggleNota(this)">
+              <span>📅 ${e.fecha.toLocaleString()}</span>
+              <span class="flecha">▼</span>
+          </div>
+          <div class="contenido-nota" style="display: ${displayStyle}">
+              <p style="white-space: pre-wrap;">${e.evolucion}</p>
+              <button onclick="eliminarNota('${nombre}', '${e.fecha.toISOString()}')" style="background:none; border:none; color:red; cursor:pointer; font-size:12px; padding:0; text-decoration:underline;">Eliminar entrada</button>
+          </div>
       </div>
     `;
   });
 
-  html += `<br><button onclick="mostrarLista()">⬅ Volver a la lista</button>`;
   document.getElementById("lista").innerHTML = html;
 }
 
-// 📄 VER DETALLE COMPLETO
-function verDetalle(nombre, index) {
-  let registros = pacientes[nombre];
-  registros.sort((a, b) => b.fecha - a.fecha);
-  let e = registros[index];
-
-  let html = `
-    <h3>Ficha Médica</h3>
-    <div class="card-evolucion">
-      <p><b>Paciente:</b> ${nombre}</p>
-      <p><b>📅 Fecha:</b> ${e.fecha.toLocaleString()}</p>
-      <p><b>🆔 Rut:</b> ${e.rut || 'No registra'}</p>
-      <p><b>🎂 Edad:</b> ${e.edad} años</p>
-      <p><b>🏠 Dirección:</b> ${e.direccion || 'No registra'}</p>
-      <p><b>📞 Teléfono:</b> ${e.telefono || 'No registra'}</p>
-      <p><b>📧 Correo:</b> ${e.correo || 'No registra'}</p>
-      <hr>
-      <p><b>📝 Evolución / Nota:</b></p>
-      <div style="background: #f9f9f9; padding: 15px; border-left: 5px solid #2c3e50; font-style: italic;">
-        ${e.evolucion}
-      </div>
-    </div>
-    <br>
-    <button onclick="eliminarEvolucion('${nombre}', '${e.fecha.toISOString()}')" style="background-color: #e74c3c; color: white;">
-      🗑️ Eliminar esta entrada
-    </button>
-    <br><br>
-    <button onclick="verPaciente('${nombre}')">⬅ Volver al historial</button>
-  `;
-  document.getElementById("lista").innerHTML = html;
+function toggleNota(elemento) {
+    elemento.classList.toggle("abierto");
+    let contenido = elemento.nextElementSibling;
+    contenido.style.display = (contenido.style.display === "block") ? "none" : "block";
 }
 
-// 🗑️ ELIMINAR REGISTRO
-function eliminarEvolucion(nombre, fecha) {
-  if (!confirm("¿Seguro que quieres eliminar esta evolución?")) return;
-  fetch(URL, {
-    method: "POST",
-    mode: "no-cors",
-    body: JSON.stringify({ accion: "eliminar", nombre: nombre, fecha: fecha })
-  }).then(() => { alert("Registro eliminado"); location.reload(); });
+function eliminarNota(nombre, fecha) {
+  if (confirm("¿Borrar esta evolución?")) {
+    fetch(URL, {method: "POST", mode: "no-cors", body: JSON.stringify({accion: "eliminar", nombre: nombre, fecha: fecha})})
+    .then(() => location.reload());
+  }
 }
 
-// 🏥 DAR DE ALTA
 function altaPaciente(nombre) {
-  if (!confirm("¿Dar de alta? Se borrarán TODOS los datos de " + nombre)) return;
-  fetch(URL, {
-    method: "POST",
-    mode: "no-cors",
-    body: JSON.stringify({ accion: "alta", nombre: nombre })
-  }).then(() => { alert("Paciente dado de alta con éxito"); location.reload(); });
-}
-
-function nuevaEvolucion() {
-  window.location.href = "evolución.html";
+  if (confirm("¿Dar de alta? Se borrará todo el historial.")) {
+    fetch(URL, {method: "POST", mode: "no-cors", body: JSON.stringify({accion: "alta", nombre: nombre})})
+    .then(() => location.reload());
+  }
 }
 </script>
-
 </body>
 </html>
