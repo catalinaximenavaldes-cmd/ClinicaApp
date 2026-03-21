@@ -7,91 +7,42 @@
     <link rel="stylesheet" href="estilos.css">
     <style>
         .agenda-container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        
-        .filtros-agenda {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .filtros-agenda { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-filtro {
-            flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            background: #ecf0f1;
-            color: #7f8c8d;
-            transition: 0.3s;
+            flex: 1; padding: 12px; border-radius: 8px; border: none;
+            font-weight: bold; cursor: pointer; background: #ecf0f1; color: #7f8c8d; transition: 0.3s;
         }
-        .btn-filtro.activo {
-            background: #3498db;
-            color: white;
-            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
-        }
+        .btn-filtro.activo { background: #3498db; color: white; box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2); }
 
         .cita-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border-left: 6px solid #3498db;
-            transition: 0.3s;
+            background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #3498db; transition: 0.3s;
         }
         .cita-info b { font-size: 1.2rem; color: #2c3e50; display: block; }
         .cita-info span { color: #7f8c8d; font-size: 0.9rem; }
+        
         .tratamiento-tag {
-            background: #e1f5fe;
-            color: #0288d1;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-top: 5px;
-            display: inline-block;
-        }
-        .btn-atender {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-atender:hover { background: #219150; transform: scale(1.05); }
-        .btn-atender:disabled { background: #bdc3c7; cursor: not-allowed; }
-        
-        .estado-realizado { border-left-color: #27ae60; background: #f9f9f9; opacity: 0.8; }
-        .check-icon { color: #27ae60; font-weight: bold; font-size: 1.2rem; }
-        
-        .fecha-encabezado {
-            text-align: center;
-            color: #34495e;
-            margin-bottom: 20px;
-            font-weight: bold;
-            background: #ecf0f1;
-            padding: 10px;
-            border-radius: 8px;
+            background: #e1f5fe; color: #0288d1; padding: 4px 10px;
+            border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-top: 5px; display: inline-block;
         }
 
-        /* Estilo para el botón de anular */
+        .acciones-container { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+
+        .btn-atender { background: #27ae60; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-eliminar { background: #e74c3c; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+        
         .btn-anular {
-            background: none;
-            border: none;
-            color: #e74c3c;
-            cursor: pointer;
-            font-size: 0.75rem;
-            text-decoration: underline;
-            display: block;
-            margin-top: 5px;
-            width: 100%;
-            text-align: right;
+            background: none; border: none; color: #e74c3c; cursor: pointer;
+            font-size: 0.75rem; text-decoration: underline; text-align: right;
+        }
+
+        .estado-realizado { border-left-color: #27ae60; background: #f9f9f9; opacity: 0.8; }
+        .check-icon { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
+        
+        .fecha-encabezado {
+            text-align: center; color: #34495e; margin-bottom: 20px; font-weight: bold;
+            background: #ecf0f1; padding: 10px; border-radius: 8px;
         }
     </style>
 </head>
@@ -122,8 +73,9 @@
     let vistaActual = 'hoy';
     let datosCompletos = [];
 
+    // Obtenemos fecha de hoy en formato local para comparar
     const hoyObj = new Date();
-    const hoyISO = hoyObj.toLocaleDateString('en-CA'); 
+    const hoyLocal = hoyObj.toLocaleDateString('es-CL'); 
 
     async function cargarAgenda() {
         try {
@@ -132,7 +84,6 @@
             datosCompletos = data.slice(1); 
             renderizarAgenda();
         } catch (error) {
-            console.error(error);
             document.getElementById("lista-agenda").innerHTML = "Error al conectar con la base de datos.";
         }
     }
@@ -147,10 +98,12 @@
         if (vistaActual === 'hoy') {
             etiquetaFecha.innerText = "Citas para hoy: " + hoyObj.toLocaleDateString();
             listaFiltrada = datosCompletos.filter(fila => {
-                const fechaCita = new Date(fila[0]).toLocaleDateString('en-CA');
-                return fechaCita === hoyISO;
+                // Comparamos fechas como strings locales para evitar desfases de zona horaria
+                const fechaCita = new Date(fila[0]).toLocaleDateString('es-CL');
+                return fechaCita === hoyLocal;
             });
-            listaFiltrada.sort((a, b) => a[1].localeCompare(b[1]));
+            // Ordenar por hora (que ahora es texto)
+            listaFiltrada.sort((a, b) => a[1].toString().localeCompare(b[1].toString()));
         } else {
             etiquetaFecha.innerText = "Todas las Citas (Historial)";
             listaFiltrada = [...datosCompletos];
@@ -163,23 +116,32 @@
         }
 
         listaFiltrada.forEach(fila => {
-            const [fecha, hora, paciente, tratamiento, estado] = fila;
+            let [fecha, hora, paciente, tratamiento, estado] = fila;
             const fechaFormateada = new Date(fecha).toLocaleDateString();
             
+            // --- LIMPIEZA DE HORA (Evita el formato largo de Google) ---
+            let horaLimpia = hora.toString();
+            if (horaLimpia.includes("T")) {
+                horaLimpia = horaLimpia.split("T")[1].substring(0, 5);
+            } else {
+                horaLimpia = horaLimpia.substring(0, 5);
+            }
+
             const card = document.createElement("div");
             card.className = "cita-card" + (estado === "Realizado" ? " estado-realizado" : "");
             
             card.innerHTML = `
                 <div class="cita-info">
-                    <span>${vistaActual === 'todas' ? '📅 ' + fechaFormateada + ' | ' : ''}🕒 ${hora} hrs</span>
+                    <span>${vistaActual === 'todas' ? '📅 ' + fechaFormateada + ' | ' : ''}🕒 ${horaLimpia} hrs</span>
                     <b>${paciente}</b>
                     <div class="tratamiento-tag">💉 ${tratamiento}</div>
                 </div>
-                <div style="text-align: right;">
+                <div class="acciones-container">
                     ${estado === "Realizado" 
                         ? `<span class="check-icon">✅ Atendido</span>
                            <button class="btn-anular" onclick="confirmarAnulacion('${paciente}', '${tratamiento}')">Anular atención</button>` 
-                        : `<button class="btn-atender" onclick="confirmarAtencion(this, '${paciente}', '${tratamiento}')">Atender</button>`}
+                        : `<button class="btn-atender" onclick="confirmarAtencion(this, '${paciente}', '${tratamiento}')">Atender</button>
+                           <button class="btn-eliminar" onclick="borrarCita('${paciente}', '${tratamiento}')">Borrar Cita</button>`}
                 </div>
             `;
             contenedor.appendChild(card);
@@ -194,32 +156,34 @@
     }
 
     async function confirmarAtencion(btn, paciente, tratamiento) {
-        if (!confirm(`¿Confirmar atención de ${paciente}?\n\nEsto actualizará el Stock.`)) return;
+        if (!confirm(`¿Confirmar atención de ${paciente}?\n\nEsto descontará insumos del Stock.`)) return;
         btn.innerText = "⏳...";
         btn.disabled = true;
-        ejecutarAccionStock("confirmarAsistenciaDesdeAgenda", paciente, tratamiento);
+        await enviarPeticion({ accion: "confirmarAsistenciaDesdeAgenda", paciente, tratamiento });
     }
 
     async function confirmarAnulacion(paciente, tratamiento) {
         if (!confirm(`¿Anular atención de ${paciente}?\n\nLos insumos se devolverán al stock.`)) return;
-        ejecutarAccionStock("anularAtencion", paciente, tratamiento);
+        await enviarPeticion({ accion: "anularAtencion", paciente, tratamiento });
     }
 
-    async function ejecutarAccionStock(accion, paciente, tratamiento) {
+    async function borrarCita(paciente, tratamiento) {
+        if (!confirm(`¿Estás seguro de ELIMINAR permanentemente esta cita de ${paciente}?\n\nEsta acción no se puede deshacer.`)) return;
+        await enviarPeticion({ accion: "eliminarCita", paciente, tratamiento });
+    }
+
+    async function enviarPeticion(datos) {
         try {
             await fetch(URL, {
                 method: "POST",
                 mode: "no-cors",
-                body: JSON.stringify({
-                    accion: accion,
-                    paciente: paciente,
-                    tratamiento: tratamiento
-                })
+                body: JSON.stringify(datos)
             });
-            alert(`✅ Operación exitosa.`);
-            cargarAgenda(); 
+            alert("✅ Operación realizada.");
+            // Pequeña pausa para que Sheets procese antes de recargar
+            setTimeout(cargarAgenda, 800);
         } catch (error) {
-            alert("Error al procesar la solicitud.");
+            alert("Error de conexión.");
             cargarAgenda();
         }
     }

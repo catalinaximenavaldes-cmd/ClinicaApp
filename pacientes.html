@@ -61,7 +61,7 @@
         }
         .btn-documentos:hover { background: #8e44ad; }
 
-        /* ESTILOS NUEVOS PARA LA AGENDA */
+        /* ESTILOS PARA LA AGENDA */
         .card-agendar {
             background: #f4ecf7;
             border: 2px solid #9b59b6;
@@ -110,6 +110,7 @@
 const URL = CONFIG.API_URL;
 let pacientes = {};
 
+// Carga inicial de datos
 fetch(URL)
   .then(res => res.json())
   .then(data => {
@@ -180,10 +181,9 @@ function verPaciente(nombre) {
 
   document.getElementById("lista").innerHTML = html;
   
-  // Cargamos los tratamientos en el selector
   cargarTratamientos();
 
-  // Historial de notas
+  // Historial de notas (acordeón)
   registros.forEach((e, index) => {
     let displayStyle = (index === 0) ? "block" : "none";
     let abiertoClase = (index === 0) ? "abierto" : "";
@@ -203,7 +203,7 @@ function verPaciente(nombre) {
   });
 }
 
-// FUNCIONES PARA LA AGENDA COORDINADA
+// FUNCIONES DE AGENDA
 async function cargarTratamientos() {
     try {
         const res = await fetch(URL + "?hoja=Tratamientos");
@@ -220,10 +220,13 @@ async function cargarTratamientos() {
 
 async function enviarAAgenda(nombrePaciente) {
     const fecha = document.getElementById("fecha-cita").value;
-    const hora = document.getElementById("hora-cita").value;
+    const horaRaw = document.getElementById("hora-cita").value;
     const tratamiento = document.getElementById("select-tratamiento-cita").value;
 
-    if (!fecha || !hora || !tratamiento) return alert("Por favor, completa fecha, hora y tratamiento.");
+    if (!fecha || !horaRaw || !tratamiento) return alert("Por favor, completa fecha, hora y tratamiento.");
+
+    // --- CORRECCIÓN CLAVE: Enviamos la hora como Texto simple ---
+    const horaTexto = horaRaw.toString();
 
     const btn = event.target;
     btn.innerText = "⏳ Guardando...";
@@ -236,14 +239,15 @@ async function enviarAAgenda(nombrePaciente) {
             body: JSON.stringify({
                 accion: "crearCita",
                 fecha: fecha,
-                hora: hora,
+                hora: horaTexto,
                 paciente: nombrePaciente,
                 tratamiento: tratamiento
             })
         });
-        alert("✅ Cita coordinada. Aparecerá en la Agenda el día seleccionado.");
+        alert("✅ Cita coordinada con éxito.");
         btn.innerText = "Guardar en Agenda";
         btn.disabled = false;
+        
         // Limpiar campos
         document.getElementById("fecha-cita").value = "";
         document.getElementById("hora-cita").value = "";
@@ -251,6 +255,7 @@ async function enviarAAgenda(nombrePaciente) {
     } catch (error) {
         alert("Error al conectar con la agenda.");
         btn.disabled = false;
+        btn.innerText = "Guardar en Agenda";
     }
 }
 
