@@ -13,29 +13,14 @@
         .flecha { font-size: 12px; transition: 0.3s; }
         .abierto .flecha { transform: rotate(180deg); }
         .etiqueta-alta { background-color: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; vertical-align: middle; margin-left: 10px; }
-        
-        /* Estilo para el botón de reactivar */
-        .btn-reactivar {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 10px;
-            font-size: 15px;
-            transition: background 0.3s;
-        }
+        .btn-reactivar { background-color: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 15px; transition: background 0.3s; }
         .btn-reactivar:hover { background-color: #2980b9; }
     </style>
 </head>
 <body>
-
     <header class="app-header">
         <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-            <img src="logoclinica.png" alt="Logo" style="height: 50px;"> 
+            <img src="logoclinica.png" alt="Logo" style="height: 50px;">
             <h1 style="color: white; margin: 0;">CliniBienVital</h1>
         </a>
     </header>
@@ -45,44 +30,47 @@
         <h2 id="titulo-pagina" style="text-align:center; color: #7f8c8d;">Pacientes Dados de Alta</h2>
         <div id="lista">Conectando con el archivo histórico...</div>
         <br>
-        <button id="btnVolverLista" style="display:none;" onclick="location.reload()" class="btn-volver">⬅ Volver a la lista de altas</button>
+        <button id="btnVolverLista" style="display:none;" onclick="location.reload()" class="btn-volver">⬅️ Volver a la lista de altas</button>
     </div>
 
 <script src="url.js"></script>
-
 <script>
 const URL_BASE = CONFIG.API_URL;
 let pacientes = {};
 
-// Cargar datos de la tabla 'historicos'
 fetch(URL_BASE + "?tabla=historicos")
   .then(res => res.json())
   .then(data => {
     pacientes = {};
     for (let i = 1; i < data.length; i++) {
-      let fila = data[i];
-      let nombre = fila[1]; 
+      const fila = data[i];
+      const nombre = fila[1];
+      if (!nombre) continue;
       if (!pacientes[nombre]) pacientes[nombre] = [];
       pacientes[nombre].push({
-        fecha: new Date(fila[0]), rut: fila[2], edad: fila[3], direccion: fila[4],
-        telefono: fila[5], correo: fila[6], evolucion: fila[7]
+        fecha: new Date(fila[0]),
+        rut: fila[2],
+        fechaNacimiento: fila[3],
+        edad: fila[4],
+        direccion: fila[5],
+        telefono: fila[6],
+        correo: fila[7],
+        evolucion: fila[8]
       });
     }
     mostrarLista();
   })
   .catch(error => {
-      console.error("Error:", error);
-      document.getElementById("lista").innerHTML = "<p>Error al cargar. Revisa que la pestaña se llame 'historicos'.</p>";
+    console.error("Error:", error);
+    document.getElementById("lista").innerHTML = "<p>Error al cargar. Revisa que la pestaña se llame 'historicos'.</p>";
   });
 
 function mostrarLista() {
   document.getElementById("btnVolverLista").style.display = "none";
   document.getElementById("titulo-pagina").innerText = "Pacientes Dados de Alta";
   let html = "";
-  for (let nombre in pacientes) {
-    html += `<div class="card-paciente" style="border-left-color: #95a5a6;" onclick="verPaciente('${nombre}')">
-                👤 ${nombre} <span class="etiqueta-alta">Alta</span>
-             </div>`;
+  for (const nombre in pacientes) {
+    html += `<div class="card-paciente" style="border-left-color: #95a5a6;" onclick="verPaciente('${nombre}')">👤 ${nombre} <span class="etiqueta-alta">Alta</span></div>`;
   }
   document.getElementById("lista").innerHTML = html || "<p style='text-align:center;'>No hay pacientes en el archivo histórico.</p>";
 }
@@ -90,33 +78,29 @@ function mostrarLista() {
 function verPaciente(nombre) {
   document.getElementById("btnVolverLista").style.display = "block";
   document.getElementById("titulo-pagina").innerText = "Expediente Histórico";
-  
-  let registros = [...pacientes[nombre]].sort((a,b) => b.fecha - a.fecha);
-  let perfil = [...pacientes[nombre]].sort((a,b) => a.fecha - b.fecha)[0];
+
+  const registros = [...pacientes[nombre]].sort((a, b) => b.fecha - a.fecha);
+  const perfil = [...pacientes[nombre]].sort((a, b) => a.fecha - b.fecha)[0];
 
   let html = `
     <div class="perfil-paciente">
         <h3 style="margin-top:0; color:#7f8c8d;">Ficha Archivada: ${nombre}</h3>
-        <p><strong>🆔 Rut:</strong> ${perfil.rut || 'No registrado'}</p>
-        <p><strong>🎂 Edad:</strong> ${perfil.edad} años</p>
+        <p><strong>🆔 RUT:</strong> ${perfil.rut || 'No registrado'}</p>
+        <p><strong>🎂 Fecha de nacimiento:</strong> ${perfil.fechaNacimiento || 'No registrada'}</p>
+        <p><strong>📅 Edad:</strong> ${perfil.edad || 'No registrada'} años</p>
         <p><strong>🏠 Dirección:</strong> ${perfil.direccion || 'No registrada'}</p>
         <p><strong>📞 Teléfono:</strong> ${perfil.telefono || 'No registrado'}</p>
         <p><strong>📧 Correo:</strong> ${perfil.correo || 'No registrado'}</p>
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        
         <button onclick="reactivarPaciente('${nombre}')" class="btn-reactivar">🔄 Reactivar Paciente (Volver a Activos)</button>
-        
-        <p style="text-align:center; color:#e74c3c; font-weight:bold; font-size:13px; margin:0;">
-            Este expediente es de solo lectura. Reactívelo para editar.
-        </p>
+        <p style="text-align:center; color:#e74c3c; font-weight:bold; font-size:13px; margin:0;">Este expediente es de solo lectura. Reactívelo para editar.</p>
     </div>
     <h4 style="color:#7f8c8d;">Historial de Atenciones Previas</h4>
   `;
 
   registros.forEach((e, index) => {
-    let displayStyle = (index === 0) ? "block" : "none";
-    let abiertoClase = (index === 0) ? "abierto" : "";
-
+    const displayStyle = index === 0 ? "block" : "none";
+    const abiertoClase = index === 0 ? "abierto" : "";
     html += `
       <div class="contenedor-acordeon">
           <div class="header-nota ${abiertoClase}" onclick="toggleNota(this)">
@@ -124,7 +108,7 @@ function verPaciente(nombre) {
               <span class="flecha">▼</span>
           </div>
           <div class="contenido-nota" style="display: ${displayStyle}">
-              <p style="white-space: pre-wrap;">${e.evolucion}</p>
+              <p style="white-space: pre-wrap;">${e.evolucion || ''}</p>
           </div>
       </div>
     `;
@@ -135,16 +119,14 @@ function verPaciente(nombre) {
 
 function toggleNota(elemento) {
     elemento.classList.toggle("abierto");
-    let contenido = elemento.nextElementSibling;
+    const contenido = elemento.nextElementSibling;
     if (contenido) {
-        contenido.style.display = (contenido.style.display === "block") ? "none" : "block";
+        contenido.style.display = contenido.style.display === "block" ? "none" : "block";
     }
 }
 
-// Función para enviar la orden de reactivación al servidor
 function reactivarPaciente(nombre) {
   if (confirm("¿Deseas devolver a " + nombre + " a la lista de pacientes actuales?")) {
-    // Bloquear botón para evitar doble clic
     const btn = document.querySelector(".btn-reactivar");
     btn.innerText = "⏳ Reactivando...";
     btn.disabled = true;
@@ -152,11 +134,11 @@ function reactivarPaciente(nombre) {
     fetch(URL_BASE, {
         method: "POST",
         mode: "no-cors",
-        body: JSON.stringify({accion: "reactivar", nombre: nombre})
+        body: JSON.stringify({ accion: "reactivar", nombre: nombre })
     })
     .then(() => {
         alert("✅ Paciente reactivado con éxito.");
-        window.location.href = "pacientes.html"; // Redirigir a la lista de activos
+        window.location.href = "pacientes.html";
     })
     .catch(err => {
         alert("Error al reactivar: " + err);

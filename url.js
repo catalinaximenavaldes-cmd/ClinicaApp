@@ -1,7 +1,7 @@
 // url.js
 const CONFIG = {
     // Pega aquí la URL de tu implementación de Apps Script
-    API_URL: "https://script.google.com/macros/s/AKfycbyLIrqYmAOfq-nG3vi5tDDrej_6ztKO62ioB3aO9esCosJDf2Eqy1vMYb0vIGceK5pd/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbxbfNUHqfd_rSN64DX2zD00QL-7AVPWwRM59xgBgQKyoMRLqrgsbPuTnC3QphiUrqry/exec",
 
     // Puedes agregar más configuraciones aquí si las necesitas en el futuro
     VERSION: "1.0.1"
@@ -9,3 +9,4 @@ const CONFIG = {
 
 // Congelamos el objeto para que no pueda ser modificado accidentalmente por otros scripts
 Object.freeze(CONFIG);
+

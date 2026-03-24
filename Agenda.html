@@ -7,42 +7,87 @@
     <link rel="stylesheet" href="estilos.css">
     <style>
         .agenda-container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        .filtros-agenda { display: flex; gap: 10px; margin-bottom: 20px; }
+        
+        /* --- FILTROS Y CALENDARIO --- */
+        .seccion-filtros {
+            background: var(--morado-agenda);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #d2b4de;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .filtros-agenda { display: flex; gap: 10px; margin-bottom: 15px; }
+        
         .btn-filtro {
             flex: 1; padding: 12px; border-radius: 8px; border: none;
-            font-weight: bold; cursor: pointer; background: #ecf0f1; color: #7f8c8d; transition: 0.3s;
+            font-weight: bold; cursor: pointer; background: #fff; color: #7f8c8d; transition: 0.3s;
+            border: 1px solid #d2b4de;
         }
-        .btn-filtro.activo { background: #3498db; color: white; box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2); }
+        .btn-filtro.activo { 
+            background: var(--morado-fuerte); 
+            color: white; 
+            box-shadow: 0 4px 6px rgba(142, 68, 173, 0.2); 
+        }
 
-        .cita-card {
-            background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #3498db; transition: 0.3s;
+        /* --- ACORDEÓN POR PACIENTE --- */
+        .grupo-paciente {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid #ddd;
         }
-        .cita-info b { font-size: 1.2rem; color: #2c3e50; display: block; }
-        .cita-info span { color: #7f8c8d; font-size: 0.9rem; }
+
+        .header-paciente {
+            background: var(--azul-clinico);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .header-paciente:hover { background: #34495e; }
+
+        .lista-citas-interna {
+            display: none; /* Se despliega al hacer clic */
+            padding: 15px;
+            background: #fdfaff;
+        }
+
+        /* --- CARDS DE CITAS --- */
+        .cita-card {
+            background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border-left: 6px solid var(--morado-fuerte);
+        }
+
+        .cita-info b { font-size: 1.1rem; color: #2c3e50; display: block; }
+        .cita-info span { color: #7f8c8d; font-size: 0.85rem; }
         
         .tratamiento-tag {
-            background: #e1f5fe; color: #0288d1; padding: 4px 10px;
+            background: #eef2f3; color: var(--azul-documentos); padding: 4px 10px;
             border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-top: 5px; display: inline-block;
         }
 
-        .acciones-container { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+        .acciones-container { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
 
-        .btn-atender { background: #27ae60; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-eliminar { background: #e74c3c; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+        .btn-atender { background: var(--verde-salud); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-eliminar { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
         
-        .btn-anular {
-            background: none; border: none; color: #e74c3c; cursor: pointer;
-            font-size: 0.75rem; text-decoration: underline; text-align: right;
-        }
-
-        .estado-realizado { border-left-color: #27ae60; background: #f9f9f9; opacity: 0.8; }
-        .check-icon { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
+        .estado-realizado { border-left-color: var(--verde-salud); background: #f9f9f9; opacity: 0.8; }
+        .check-icon { color: var(--verde-salud); font-weight: bold; font-size: 1rem; }
         
         .fecha-encabezado {
-            text-align: center; color: #34495e; margin-bottom: 20px; font-weight: bold;
-            background: #ecf0f1; padding: 10px; border-radius: 8px;
+            text-align: center; color: var(--morado-fuerte); margin-bottom: 15px; font-weight: bold;
+            font-size: 1.1rem;
         }
     </style>
 </head>
@@ -55,9 +100,16 @@
 <div class="agenda-container">
     <button class="btn-volver" style="margin-bottom: 20px;" onclick="window.location.href='index.html'">⬅ Volver al Menú</button>
     
-    <div class="filtros-agenda">
-        <button id="filtro-hoy" class="btn-filtro activo" onclick="cambiarVista('hoy')">Citas de Hoy</button>
-        <button id="filtro-todas" class="btn-filtro" onclick="cambiarVista('todas')">Ver Historial</button>
+    <div class="seccion-filtros">
+        <div class="filtros-agenda">
+            <button id="filtro-hoy" class="btn-filtro activo" onclick="cambiarVista('hoy')">Citas de Hoy</button>
+            <button id="filtro-todas" class="btn-filtro" onclick="cambiarVista('todas')">Ver Historial</button>
+        </div>
+
+        <div id="contenedor-calendario" style="text-align: center;">
+            <label style="font-size: 0.9rem; color: #666;">📅 Seleccionar fecha específica:</label>
+            <input type="date" id="input-fecha" onchange="filtrarPorCalendario()" style="margin-top: 5px;">
+        </div>
     </div>
 
     <div id="fecha-actual" class="fecha-encabezado"></div>
@@ -72,10 +124,7 @@
     const URL = CONFIG.API_URL;
     let vistaActual = 'hoy';
     let datosCompletos = [];
-
-    // Obtenemos fecha de hoy en formato local para comparar
-    const hoyObj = new Date();
-    const hoyLocal = hoyObj.toLocaleDateString('es-CL'); 
+    const hoyLocal = new Date().toLocaleDateString('es-CL'); 
 
     async function cargarAgenda() {
         try {
@@ -88,104 +137,137 @@
         }
     }
 
-    function renderizarAgenda() {
+    function renderizarAgenda(citasPersonalizadas = null) {
         const contenedor = document.getElementById("lista-agenda");
         const etiquetaFecha = document.getElementById("fecha-actual");
         contenedor.innerHTML = "";
 
-        let listaFiltrada = [];
+        let listaFiltrada = citasPersonalizadas;
 
-        if (vistaActual === 'hoy') {
-            etiquetaFecha.innerText = "Citas para hoy: " + hoyObj.toLocaleDateString();
-            listaFiltrada = datosCompletos.filter(fila => {
-                // Comparamos fechas como strings locales para evitar desfases de zona horaria
-                const fechaCita = new Date(fila[0]).toLocaleDateString('es-CL');
-                return fechaCita === hoyLocal;
-            });
-            // Ordenar por hora (que ahora es texto)
-            listaFiltrada.sort((a, b) => a[1].toString().localeCompare(b[1].toString()));
-        } else {
-            etiquetaFecha.innerText = "Todas las Citas (Historial)";
-            listaFiltrada = [...datosCompletos];
-            listaFiltrada.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+        if (!listaFiltrada) {
+            if (vistaActual === 'hoy') {
+                etiquetaFecha.innerText = "Citas para hoy: " + hoyLocal;
+                listaFiltrada = datosCompletos.filter(fila => {
+                    const fechaCita = new Date(fila[0]).toLocaleDateString('es-CL');
+                    return fechaCita === hoyLocal;
+                });
+            } else {
+                etiquetaFecha.innerText = "Historial Completo";
+                listaFiltrada = [...datosCompletos];
+            }
         }
 
         if (listaFiltrada.length === 0) {
-            contenedor.innerHTML = `<p style='text-align:center; color:#95a5a6;'>No hay registros en esta vista.</p>`;
+            contenedor.innerHTML = `<p style='text-align:center; color:#95a5a6;'>No hay registros para mostrar.</p>`;
             return;
         }
 
+        // --- AGRUPAR POR PACIENTE ---
+        const grupos = {};
         listaFiltrada.forEach(fila => {
-            let [fecha, hora, paciente, tratamiento, estado] = fila;
-            const fechaFormateada = new Date(fecha).toLocaleDateString();
-            
-            // --- LIMPIEZA DE HORA (Evita el formato largo de Google) ---
-            let horaLimpia = hora.toString();
-            if (horaLimpia.includes("T")) {
-                horaLimpia = horaLimpia.split("T")[1].substring(0, 5);
-            } else {
-                horaLimpia = horaLimpia.substring(0, 5);
-            }
+            const nombrePaciente = fila[2];
+            if (!grupos[nombrePaciente]) grupos[nombrePaciente] = [];
+            grupos[nombrePaciente].push(fila);
+        });
 
-            const card = document.createElement("div");
-            card.className = "cita-card" + (estado === "Realizado" ? " estado-realizado" : "");
+        // Ordenar pacientes alfabéticamente
+        const nombresOrdenados = Object.keys(grupos).sort();
+
+        nombresOrdenados.forEach(nombre => {
+            const grupoDiv = document.createElement("div");
+            grupoDiv.className = "grupo-paciente";
             
-            card.innerHTML = `
+            grupoDiv.innerHTML = `
+                <div class="header-paciente" onclick="toggleAcordeon(this)">
+                    <span>👤 ${nombre}</span>
+                    <span>${grupos[nombre].length} cita(s) ▾</span>
+                </div>
+                <div class="lista-citas-interna">
+                    ${grupos[nombre].map(fila => crearCardCita(fila)).join('')}
+                </div>
+            `;
+            contenedor.appendChild(grupoDiv);
+        });
+    }
+
+    function crearCardCita(fila) {
+        let [fecha, hora, paciente, tratamiento, estado] = fila;
+        const fechaCita = new Date(fecha).toLocaleDateString('es-CL');
+        
+        let horaLimpia = hora.toString();
+        if (horaLimpia.includes("T")) {
+            horaLimpia = horaLimpia.split("T")[1].substring(0, 5);
+        } else {
+            horaLimpia = horaLimpia.substring(0, 5);
+        }
+
+        return `
+            <div class="cita-card ${estado === 'Realizado' ? 'estado-realizado' : ''}">
                 <div class="cita-info">
-                    <span>${vistaActual === 'todas' ? '📅 ' + fechaFormateada + ' | ' : ''}🕒 ${horaLimpia} hrs</span>
-                    <b>${paciente}</b>
+                    <span>📅 ${fechaCita} | 🕒 ${horaLimpia} hrs</span>
+                    <b>${tratamiento}</b>
                     <div class="tratamiento-tag">💉 ${tratamiento}</div>
                 </div>
                 <div class="acciones-container">
                     ${estado === "Realizado" 
-                        ? `<span class="check-icon">✅ Atendido</span>
-                           <button class="btn-anular" onclick="confirmarAnulacion('${paciente}', '${tratamiento}')">Anular atención</button>` 
-                        : `<button class="btn-atender" onclick="confirmarAtencion(this, '${paciente}', '${tratamiento}')">Atender</button>
-                           <button class="btn-eliminar" onclick="borrarCita('${paciente}', '${tratamiento}')">Borrar Cita</button>`}
+                        ? `<span class="check-icon">✅ Atendido</span>` 
+                        : `<button class="btn-atender" onclick="confirmarAtencion('${paciente}', '${tratamiento}')">Atender</button>
+                           <button class="btn-eliminar" onclick="borrarCita('${paciente}', '${tratamiento}')">Borrar</button>`}
                 </div>
-            `;
-            contenedor.appendChild(card);
-        });
+            </div>
+        `;
+    }
+
+    function toggleAcordeon(elemento) {
+        const panel = elemento.nextElementSibling;
+        const isVisible = panel.style.display === "block";
+        panel.style.display = isVisible ? "none" : "block";
     }
 
     function cambiarVista(vista) {
         vistaActual = vista;
+        document.getElementById('input-fecha').value = ""; // Limpiar calendario
         document.getElementById('filtro-hoy').classList.toggle('activo', vista === 'hoy');
         document.getElementById('filtro-todas').classList.toggle('activo', vista === 'todas');
         renderizarAgenda();
     }
 
-    async function confirmarAtencion(btn, paciente, tratamiento) {
-        if (!confirm(`¿Confirmar atención de ${paciente}?\n\nEsto descontará insumos del Stock.`)) return;
-        btn.innerText = "⏳...";
-        btn.disabled = true;
+    function filtrarPorCalendario() {
+        const fechaSeleccionada = document.getElementById("input-fecha").value;
+        if (!fechaSeleccionada) return;
+
+        // Convertimos YYYY-MM-DD a formato local para comparar
+        const [y, m, d] = fechaSeleccionada.split('-');
+        const fechaBusqueda = new Date(y, m - 1, d).toLocaleDateString('es-CL');
+
+        const filtradas = datosCompletos.filter(fila => {
+            const fechaCita = new Date(fila[0]).toLocaleDateString('es-CL');
+            return fechaCita === fechaBusqueda;
+        });
+
+        document.getElementById('filtro-hoy').classList.remove('activo');
+        document.getElementById('filtro-todas').classList.remove('activo');
+        document.getElementById("fecha-actual").innerText = "Resultados para: " + fechaBusqueda;
+        
+        renderizarAgenda(filtradas);
+    }
+
+    async function confirmarAtencion(paciente, tratamiento) {
+        if (!confirm(`¿Confirmar atención de ${paciente}?`)) return;
         await enviarPeticion({ accion: "confirmarAsistenciaDesdeAgenda", paciente, tratamiento });
     }
 
-    async function confirmarAnulacion(paciente, tratamiento) {
-        if (!confirm(`¿Anular atención de ${paciente}?\n\nLos insumos se devolverán al stock.`)) return;
-        await enviarPeticion({ accion: "anularAtencion", paciente, tratamiento });
-    }
-
     async function borrarCita(paciente, tratamiento) {
-        if (!confirm(`¿Estás seguro de ELIMINAR permanentemente esta cita de ${paciente}?\n\nEsta acción no se puede deshacer.`)) return;
+        if (!confirm(`¿Eliminar cita de ${paciente}?`)) return;
         await enviarPeticion({ accion: "eliminarCita", paciente, tratamiento });
     }
 
     async function enviarPeticion(datos) {
         try {
-            await fetch(URL, {
-                method: "POST",
-                mode: "no-cors",
-                body: JSON.stringify(datos)
-            });
-            alert("✅ Operación realizada.");
-            // Pequeña pausa para que Sheets procese antes de recargar
+            await fetch(URL, { method: "POST", mode: "no-cors", body: JSON.stringify(datos) });
+            alert("✅ Hecho.");
             setTimeout(cargarAgenda, 800);
-        } catch (error) {
-            alert("Error de conexión.");
-            cargarAgenda();
-        }
+        } catch (error) { alert("Error."); }
     }
 
     window.onload = cargarAgenda;

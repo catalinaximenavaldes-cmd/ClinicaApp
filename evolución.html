@@ -6,70 +6,38 @@
     <title>Nueva Evolución - CliniBienVital</title>
     <link rel="stylesheet" href="estilos.css">
     <style>
-        .textarea-evolucion {
-            width: 100%;
-            height: 300px;
-            padding: 15px;
-            box-sizing: border-box;
-            border: 2px solid #34495e;
-            border-radius: 8px;
-            resize: vertical;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 16px;
-            line-height: 1.5;
-            margin-top: 10px;
-        }
-        .paciente-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #dee2e6;
-            border-left: 8px solid #27ae60; /* Verde clínico */
-        }
-        .datos-secundarios {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
+        .textarea-evolucion { width: 100%; height: 300px; padding: 15px; box-sizing: border-box; border: 2px solid #34495e; border-radius: 8px; resize: vertical; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; line-height: 1.5; margin-top: 10px; }
+        .paciente-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dee2e6; border-left: 8px solid #27ae60; }
+        .datos-secundarios { font-size: 14px; color: #7f8c8d; margin-top: 5px; }
     </style>
 </head>
-
 <body>
-
     <header class="app-header">
         <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-            <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;"> 
+            <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;">
             <h1 style="color: white; margin: 0;">CliniBienVital</h1>
         </a>
     </header>
 
     <div class="main-content">
-        
-        <button class="btn-volver" onclick="window.location.href='pacientes.html'">⬅ Volver al Historial</button>
+        <button class="btn-volver" onclick="window.location.href='pacientes.html'">⬅️ Volver al Historial</button>
         <hr>
-
         <div class="paciente-box">
             <strong>Ficha de atención:</strong>
             <div id="nombre-paciente" style="font-size: 22px; color: #2c3e50; font-weight: bold;">Cargando nombre...</div>
             <div id="detalles-paciente" class="datos-secundarios">Buscando datos del paciente...</div>
         </div>
-
         <h3>Redactar Evolución Clínica</h3>
         <textarea id="resultado" class="textarea-evolucion" placeholder="Escriba aquí la evolución del paciente, novedades, constantes vitales y plan de tratamiento..."></textarea>
-
         <button class="btn-guardar" onclick="guardarEvolucion()">💾 Guardar en Ficha Clínica</button>
-
         <br><br>
         <button onclick="window.history.back()" style="background: none; border: none; color: #7f8c8d; cursor: pointer; text-decoration: underline;">Cancelar y volver</button>
     </div>
 
 <script src="url.js"></script>
-
 <script>
-// Usamos la constante del archivo url.js
 const URL = CONFIG.API_URL;
-let pacienteActual = localStorage.getItem("pacienteActual");
+const pacienteActual = localStorage.getItem("pacienteActual");
 
 if (!pacienteActual) {
     alert("Error: No se ha seleccionado un paciente.");
@@ -79,18 +47,15 @@ if (!pacienteActual) {
     cargarDatosPaciente();
 }
 
-// BUSCAR DATOS DEL PACIENTE PARA MOSTRARLOS
 function cargarDatosPaciente() {
     fetch(URL)
     .then(res => res.json())
     .then(data => {
-        // Buscamos la primera fila donde el nombre (columna 1) coincida
-        let registro = data.find(fila => fila[1] === pacienteActual);
-        
+        const registro = data.find(fila => fila[1] === pacienteActual);
         if (registro) {
             document.getElementById("detalles-paciente").innerHTML = `
-                🆔 <b>Rut:</b> ${registro[2] || 'N/A'} | 🎂 <b>Edad:</b> ${registro[3]} años <br>
-                🏠 <b>Dirección:</b> ${registro[4] || 'N/A'}
+                🆔 <b>RUT:</b> ${registro[2] || 'N/A'} | 🎂 <b>Fecha de nacimiento:</b> ${registro[3] || 'N/A'} <br>
+                📅 <b>Edad:</b> ${registro[4] || 'N/A'} años | 🏠 <b>Dirección:</b> ${registro[5] || 'N/A'}
             `;
         } else {
             document.getElementById("detalles-paciente").innerText = "No se encontraron datos básicos del paciente.";
@@ -102,10 +67,8 @@ function cargarDatosPaciente() {
     });
 }
 
-// GUARDAR EVOLUCIÓN
 function guardarEvolucion() {
-    let evolucion = document.getElementById("resultado").value;
-
+    const evolucion = document.getElementById("resultado").value;
     if (!evolucion.trim()) {
         alert("Por favor, redacte la evolución antes de guardar.");
         return;
@@ -115,18 +78,15 @@ function guardarEvolucion() {
     btn.innerText = "⏳ Guardando en ficha...";
     btn.disabled = true;
 
-    // Enviamos el objeto con la estructura que espera tu Google Apps Script
     const datos = {
         nombre: pacienteActual,
-        accion: "guardar",
-        evolucion: evolucion,
-        // Campos opcionales que el script podría intentar leer
-        rut: "", edad: "", direccion: "", telefono: "", correo: ""
+        accion: "guardarEvolucion",
+        evolucion: evolucion
     };
 
     fetch(URL, {
         method: "POST",
-        mode: "no-cors", // Importante para Google Apps Script
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
     })
@@ -141,6 +101,5 @@ function guardarEvolucion() {
     });
 }
 </script>
-
 </body>
 </html>

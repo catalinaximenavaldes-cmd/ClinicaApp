@@ -1,9 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="estilos.css"> 
+    <link rel="stylesheet" href="estilos.css">
     <title>Ingreso paciente - CliniBienVital</title>
     <style>
         .btn-inicio { background-color: #34495e; color: white; margin-bottom: 20px; display: block; border: none; padding: 10px; border-radius: 4px; cursor: pointer; }
@@ -11,26 +11,20 @@
         .btn-guardar:hover { background-color: #219150; }
         .container { margin-top: 10px; }
         input { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
-        /* Estilo para error visual */
-        .input-error { border: 2px solid #e74c3c !important; background-color: #fdf2f2; }
+        #preview_edad { color: #7f8c8d; font-size: 0.85rem; margin-top: 4px; font-weight: bold; }
     </style>
 </head>
-
 <body>
-
     <header class="app-header">
         <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-            <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;"> 
+            <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;">
             <h1 style="color: white; margin: 0;">CliniBienVital</h1>
         </a>
     </header>
 
     <div class="main-content">
-        
         <button type="button" class="btn-inicio" onclick="window.location.href='index.html'">🏠 Inicio</button>
-
-        <hr> 
-        
+        <hr>
         <h2>Ingreso de nuevo paciente</h2>
 
         <div class="container">
@@ -44,8 +38,9 @@
         </div><br>
 
         <div class="container">
-            Edad:<br>
-            <input type="number" id="edad" placeholder="Ej: 30">
+            Fecha de Nacimiento:<br>
+            <input type="date" id="fecha_nacimiento" onchange="mostrarEdadCalculada(this.value)">
+            <div id="preview_edad"></div>
         </div><br>
 
         <div class="container">
@@ -63,116 +58,80 @@
             <input type="email" id="correo" placeholder="ejemplo@correo.com">
         </div><br>
 
-        <button onclick="guardarPaciente()" class="btn-guardar">💾 Guardar Paciente</button>
+        <div class="container">
+            Diagnóstico Inicial / Motivo de consulta:<br>
+            <input type="text" id="diagnostico" placeholder="Ej: Esguince de tobillo">
+        </div><br>
 
+        <button onclick="guardarPaciente()" class="btn-guardar">💾 Guardar Paciente</button>
         <br><br>
         <button onclick="window.history.back()" type="button" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#7f8c8d;">⬅️ Volver atrás</button>
     </div>
 
 <script src="url.js"></script>
-
 <script>
-    // --- 1. FORMATEADOR DE RUT (Evita puntos, pone el guion) ---
-    function formatearRut(input) {
-        let valor = input.value.replace(/[^0-9kK]/g, ''); // Quita todo lo que no sea número o K
-        if (valor.length > 1) {
-            let cuerpo = valor.slice(0, -1);
-            let dv = valor.slice(-1).toLowerCase();
-            input.value = cuerpo + '-' + dv;
-        }
+function mostrarEdadCalculada(fecha) {
+    if (!fecha) return;
+    const hoy = new Date();
+    const cumple = new Date(fecha);
+    let edad = hoy.getFullYear() - cumple.getFullYear();
+    const m = hoy.getMonth() - cumple.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < cumple.getDate())) edad--;
+    document.getElementById("preview_edad").innerText = "Edad estimada: " + edad + " años";
+}
+
+function formatearRut(input) {
+    let valor = input.value.replace(/[^0-9kK]/g, "");
+    if (valor.length > 1) {
+        let cuerpo = valor.slice(0, -1);
+        let dv = valor.slice(-1).toLowerCase();
+        input.value = cuerpo + "-" + dv;
+    }
+}
+
+async function guardarPaciente() {
+    const nombre = document.getElementById("nombre").value.trim();
+    const rut = document.getElementById("rut").value.trim();
+    const fecha_nacimiento = document.getElementById("fecha_nacimiento").value;
+    const direccion = document.getElementById("direccion").value.trim();
+    const telefono = document.getElementById("telefono").value.trim();
+    const correo = document.getElementById("correo").value.trim();
+    const diagnostico = document.getElementById("diagnostico").value.trim();
+
+    if (!nombre || !rut || !fecha_nacimiento) {
+        alert("Nombre, RUT y Fecha de Nacimiento son obligatorios.");
+        return;
     }
 
-    // --- 2. VALIDOR DE RUT (Módulo 11) ---
-    function esRutValido(rut) {
-        if (!/^[0-9]+[-|‐][0-9kK]{1}$/.test(rut)) return false;
-        let tmp = rut.split('-');
-        let digv = tmp[1].toLowerCase(); 
-        let cuerpo = tmp[0];
-        let suma = 0;
-        let multiplo = 2;
-        for (let i = 1; i <= cuerpo.length; i++) {
-            suma += multiplo * cuerpo.charAt(cuerpo.length - i);
-            multiplo = (multiplo < 7) ? multiplo + 1 : 2;
-        }
-        let dvEsperado = 11 - (suma % 11);
-        dvEsperado = (dvEsperado == 11) ? 0 : (dvEsperado == 10) ? "k" : dvEsperado;
-        return dvEsperado == digv;
-    }
+    const btn = document.querySelector(".btn-guardar");
+    btn.innerText = "⏳ Guardando...";
+    btn.disabled = true;
 
-    // --- 3. VALIDADOR DE CORREO ---
-    function esCorreoValido(correo) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
-    }
+    const datos = {
+        nombre: nombre,
+        rut: rut,
+        fecha_nacimiento: fecha_nacimiento,
+        direccion: direccion,
+        telefono: telefono,
+        correo: correo,
+        evolucion: diagnostico || "Ingreso inicial registrado"
+    };
 
-    // --- 4. FUNCIÓN GUARDAR ---
-    function guardarPaciente() {
-        // Capturar elementos
-        const inputNombre = document.getElementById("nombre");
-        const inputRut = document.getElementById("rut");
-        const inputCorreo = document.getElementById("correo");
-
-        // Capturar valores
-        const nombre = inputNombre.value.trim();
-        const rut = inputRut.value.trim();
-        const edad = document.getElementById("edad").value;
-        const direccion = document.getElementById("direccion").value; 
-        const telefono = document.getElementById("telefono").value;
-        const correo = inputCorreo.value.trim();
-
-        // Resetear errores visuales
-        [inputNombre, inputRut, inputCorreo].forEach(el => el.classList.remove("input-error"));
-
-        // VALIDACIONES
-        if (!nombre) {
-            alert("El nombre es obligatorio.");
-            inputNombre.classList.add("input-error");
-            return;
-        }
-
-        if (!esRutValido(rut)) {
-            alert("El RUT ingresado no es válido o no tiene el formato (12345678-9).");
-            inputRut.classList.add("input-error");
-            return;
-        }
-
-        if (correo && !esCorreoValido(correo)) {
-            alert("El formato del correo electrónico es incorrecto.");
-            inputCorreo.classList.add("input-error");
-            return;
-        }
-
-        // Si todo está ok, preparar envío
-        const btn = document.querySelector(".btn-guardar");
-        btn.innerText = "⏳ Guardando...";
-        btn.disabled = true;
-
-        const datos = {
-            nombre, rut, edad, direccion, telefono, correo,
-            evolucion: "Ingreso inicial registrado",
-            accion: "guardar"
-        };
-
-        // NUEVO: Ahora usamos la variable del config.js en lugar del link largo
-        const URL_APPS_SCRIPT = CONFIG.API_URL;
-
-        fetch(URL_APPS_SCRIPT, {
+    try {
+        await fetch(CONFIG.API_URL, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(datos)
-        })
-        .then(() => {
-            alert("✅ Paciente guardado con éxito!");
-            window.location.href = "index.html"; 
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            alert("Error al conectar con la base de datos.");
-            btn.innerText = "💾 Guardar Paciente";
-            btn.disabled = false;
         });
+        alert("✅ Paciente guardado con éxito.");
+        window.location.href = "index.html";
+    } catch (error) {
+        alert("Error al conectar.");
+        btn.innerText = "💾 Guardar Paciente";
+        btn.disabled = false;
     }
+}
 </script>
-
 </body>
 </html>
