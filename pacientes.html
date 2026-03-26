@@ -84,6 +84,7 @@
 <script>
 const URL = CONFIG.API_URL;
 let pacientes = {};
+let historialPacientes = {};
 let pacienteEditando = "";
 
 function normalizarFechaInput(valor) {
@@ -123,17 +124,41 @@ function calcularEdadDesdeFecha(valor) {
   return edad >= 0 ? edad : "";
 }
 
-fetch(URL)
-  .then(res => res.json())
-  .then(data => {
+function normalizarFechaRegistro(valor) {
+  const fecha = new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? new Date() : fecha;
+}
+
+function agregarAlHistorial(nombre, item) {
+  if (!nombre) return;
+  if (!historialPacientes[nombre]) historialPacientes[nombre] = [];
+  historialPacientes[nombre].push(item);
+}
+
+async function cargarBaseDatos() {
+  try {
+    const [resPacientes, resEvoluciones, resDocumentos] = await Promise.all([
+      fetch(URL),
+      fetch(URL + "?tabla=Evoluciones"),
+      fetch(URL + "?tabla=Documentos")
+    ]);
+
+    const [dataPacientes, dataEvoluciones, dataDocumentos] = await Promise.all([
+      resPacientes.json(),
+      resEvoluciones.json(),
+      resDocumentos.json()
+    ]);
+
     pacientes = {};
-    for (let i = 1; i < data.length; i++) {
-      const fila = data[i];
+    historialPacientes = {};
+
+    for (let i = 1; i < dataPacientes.length; i++) {
+      const fila = dataPacientes[i];
       const nombre = fila[1];
       if (!nombre) continue;
       if (!pacientes[nombre]) pacientes[nombre] = [];
       pacientes[nombre].push({
-        fecha: new Date(fila[0]),
+        fecha: normalizarFechaRegistro(fila[0]),
         rut: fila[2],
         fechaNacimiento: fila[3],
         edad: fila[4],
@@ -144,9 +169,35 @@ fetch(URL)
         tratamientoActivo: fila[9]
       });
     }
+
+    for (let i = 1; i < dataEvoluciones.length; i++) {
+      const fila = dataEvoluciones[i];
+      agregarAlHistorial(fila[1], {
+        fecha: normalizarFechaRegistro(fila[0]),
+        evolucion: fila[3] || "",
+        tabla: "Evoluciones",
+        tipo: "Evolucion"
+      });
+    }
+
+    for (let i = 1; i < dataDocumentos.length; i++) {
+      const fila = dataDocumentos[i];
+      agregarAlHistorial(fila[1], {
+        fecha: normalizarFechaRegistro(fila[0]),
+        evolucion: fila[4] || "",
+        tabla: "Documentos",
+        tipo: fila[3] || "Documento"
+      });
+    }
+
     mostrarLista();
-  })
-  .catch(() => { document.getElementById("lista").innerHTML = "Error al conectar."; });
+  } catch (error) {
+    console.error("Error al conectar:", error);
+    document.getElementById("lista").innerHTML = "Error al conectar.";
+  }
+}
+
+cargarBaseDatos();
 
 function mostrarLista() {
   document.getElementById("btnVolverLista").style.display = "none";
@@ -163,7 +214,7 @@ function verPaciente(nombre) {
   document.getElementById("btnVolverLista").style.display = "block";
   document.getElementById("titulo-pagina").innerText = "Expediente Completo";
 
-  const registros = [...pacientes[nombre]].sort((a, b) => b.fecha - a.fecha);
+  const registros = [...(historialPacientes[nombre] || [])].sort((a, b) => b.fecha - a.fecha);
   const perfil = [...pacientes[nombre]].sort((a, b) => a.fecha - b.fecha)[0];
 
   const html = `
@@ -214,18 +265,23 @@ function verPaciente(nombre) {
   cargarTratamientos();
   cargarDiagnostico(nombre);
 
+  if (!registros.length) {
+    document.getElementById("lista").insertAdjacentHTML("beforeend", '<p style="margin:10px;">No hay evoluciones ni documentos registrados.</p>');
+    return;
+  }
+
   registros.forEach((e, index) => {
     const displayStyle = index === 0 ? "block" : "none";
     const abiertoClase = index === 0 ? "abierto" : "";
     const notaHtml = `
       <div class="contenedor-acordeon">
           <div class="header-nota ${abiertoClase}" onclick="toggleNota(this)">
-              <span>📅 ${e.fecha.toLocaleString()}</span>
+              <span>${e.tipo || 'Registro'} - ${e.fecha.toLocaleString()}</span>
               <span>▼</span>
           </div>
           <div class="contenido-nota" style="display: ${displayStyle}">
               <p style="white-space: pre-wrap;">${e.evolucion || ''}</p>
-              <button class="no-print" onclick="eliminarNota('${nombre}', '${e.fecha.toISOString()}')" style="background:none; border:none; color:red; cursor:pointer; font-size:12px; padding:0; text-decoration:underline;">Eliminar entrada</button>
+              <button class="no-print" onclick="eliminarNota('${nombre}', '${e.fecha.toISOString()}', '${e.tabla || "Evoluciones"}')" style="background:none; border:none; color:red; cursor:pointer; font-size:12px; padding:0; text-decoration:underline;">Eliminar entrada</button>
           </div>
       </div>
     `;
@@ -541,7 +597,7 @@ function imprimirCarta(nombre) {
   }
 
   const perfil = [...registrosPaciente].sort((a, b) => a.fecha - b.fecha)[0];
-  const evoluciones = [...registrosPaciente].sort((a, b) => b.fecha - a.fecha);
+  const evoluciones = [...(historialPacientes[nombre] || [])].sort((a, b) => b.fecha - a.fecha);
   const diagnostico = document.getElementById("txt-diagnostico")?.value?.trim() || "No registrado";
   const fechaEmision = new Date().toLocaleDateString("es-CL", {
     day: "2-digit",
@@ -550,15 +606,15 @@ function imprimirCarta(nombre) {
   });
   const logoUrl = new window.URL("logoclinica.png", window.location.href).href;
 
-  const contenidoEvoluciones = evoluciones.map((registro, index) => `
+  const contenidoEvoluciones = evoluciones.length ? evoluciones.map((registro, index) => `
     <section class="evolucion">
       <div class="evolucion-header">
-        <span>Evolucion ${index + 1}</span>
+        <span>${escaparHtml(registro.tipo || ("Evolucion " + (index + 1)))}</span>
         <span>${escaparHtml(registro.fecha ? registro.fecha.toLocaleString("es-CL") : "Sin fecha")}</span>
       </div>
       <div class="evolucion-body">${escaparHtml(registro.evolucion || "Sin registro").replace(/\n/g, "<br>")}</div>
     </section>
-  `).join("");
+  `).join("") : '<p>No hay evoluciones ni documentos registrados.</p>';
 
   const ventana = window.open("about:blank", "_blank", "width=900,height=1200");
   if (!ventana) {
@@ -778,7 +834,7 @@ function toggleNota(elemento) {
     contenido.style.display = contenido.style.display === "block" ? "none" : "block";
   }
 }
-async function eliminarNota(nombre, fecha) {
+async function eliminarNota(nombre, fecha, tabla = "Evoluciones") {
   if (!confirm("¿Deseas eliminar esta evolución del historial?")) {
     return;
   }
@@ -791,7 +847,8 @@ async function eliminarNota(nombre, fecha) {
       body: JSON.stringify({
         accion: "eliminarNota",
         nombre,
-        fecha
+        fecha,
+        tabla
       })
     });
 
@@ -861,6 +918,7 @@ async function eliminarPacienteCompleto(nombre) {
 </script>
 </body>
 </html>
+
 
 
 

@@ -67,6 +67,23 @@ function cargarDatosPaciente() {
     });
 }
 
+function enviarDatosAppsScript(datos) {
+    const payload = JSON.stringify(datos);
+
+    if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
+        const enviado = navigator.sendBeacon(URL, blob);
+        return enviado ? Promise.resolve() : Promise.reject(new Error("No se pudo encolar el envio."));
+    }
+
+    return fetch(URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: payload
+    }).then(() => undefined);
+}
+
 function guardarEvolucion() {
     const evolucion = document.getElementById("resultado").value;
     if (!evolucion.trim()) {
@@ -80,16 +97,11 @@ function guardarEvolucion() {
 
     const datos = {
         nombre: pacienteActual,
-        accion: "guardarEvolucion",
+        accion: "guardarEvolucionNueva",
         evolucion: evolucion
     };
 
-    fetch(URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos)
-    })
+    enviarDatosAppsScript(datos)
     .then(() => {
         alert("✅ Evolución guardada correctamente.");
         window.location.href = "pacientes.html";

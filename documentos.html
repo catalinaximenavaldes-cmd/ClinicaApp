@@ -124,6 +124,23 @@ function elegirDato(registros, indice) {
     return "";
 }
 
+function enviarDatosAppsScript(datos) {
+    const payload = JSON.stringify(datos);
+
+    if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
+        const enviado = navigator.sendBeacon(URL, blob);
+        return enviado ? Promise.resolve() : Promise.reject(new Error("No se pudo encolar el envio."));
+    }
+
+    return fetch(URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: payload
+    }).then(() => undefined);
+}
+
 if (!pacienteActual) window.location.href = "pacientes.html";
 document.getElementById("nombre-display").innerText = pacienteActual;
 document.getElementById("logo-doc").src = logoDocumento;
@@ -179,16 +196,12 @@ function guardarCopiaAutomatica(texto) {
 
     const datos = {
         nombre: pacienteActual,
-        accion: "guardarEvolucion",
-        evolucion: `[${tipoDoc}]\n${texto}`
+        accion: "guardarDocumento",
+        tipo: tipoDoc,
+        contenido: texto
     };
 
-    fetch(URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos)
-    })
+    enviarDatosAppsScript(datos)
     .then(() => {
         statusMsg.innerText = "✅ Copia guardada en el historial del paciente.";
         statusMsg.style.color = "#27ae60";
