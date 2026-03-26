@@ -10,14 +10,17 @@
         .btn-doc { padding: 20px; border-radius: 10px; border: 2px solid #3498db; background: white; cursor: pointer; font-weight: bold; text-align: center; }
         .btn-doc:hover { background: #ebf5fb; }
         #contenedor-previa { display: none; margin-top: 20px; padding: 20px; background: #f9f9f9; border: 1px dashed #ccc; text-align: center; }
-        #area-impresion { display: none; background: white; padding: 50px; font-family: 'Times New Roman', serif; color: #000; text-align: left; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 100%; max-width: 800px; margin: 0 auto; }
+        #area-impresion { display: none; background: white; padding: 14mm 12mm; font-family: 'Times New Roman', serif; color: #000; text-align: left; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 148mm; min-height: 210mm; margin: 0 auto; box-sizing: border-box; }
+        @page { size: A5 portrait; margin: 10mm; }
         @media print {
             body * { display: none !important; }
             #area-impresion, #area-impresion * { display: block !important; }
-            #area-impresion { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 40px; }
+            #area-impresion { position: absolute; left: 0; top: 0; width: 148mm; min-height: 210mm; box-shadow: none; padding: 14mm 12mm; }
         }
-        .header-receta { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        .footer-receta { margin-top: 50px; border-top: 1px solid #ccc; padding-top: 20px; text-align: center; }
+        .header-receta { border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 14px; }
+        .header-receta::after { content: ""; display: block; clear: both; }
+        .logo-clinica { width: 52px; height: 52px; object-fit: contain; float: left; margin-right: 12px; }
+        .footer-receta { margin-top: 24mm; border-top: 1px solid #ccc; padding-top: 12px; text-align: center; }
     </style>
 </head>
 <body>
@@ -58,29 +61,32 @@
 
 <div id="area-impresion">
     <div class="header-receta">
+        <img id="logo-doc" class="logo-clinica" alt="Logo CliniBienVital">
         <div style="float: right; text-align: right;">
-            <h2 style="margin:0;">Dr. Manuel Miguel Diaz Diaz</h2>
-            <p style="margin:0;">RUT: 14.660.564-8</p>
-            <p style="margin:0;">Médico Cirujano - Traumatología y Ortopedia</p>
+            <h2 style="margin:0; font-size: 18px;">Dr. Manuel Miguel Diaz Diaz</h2>
+            <p style="margin:2px 0 0 0; font-size: 12px;">RUT: 14.660.564-8</p>
+            <p style="margin:2px 0 0 0; font-size: 12px;">Médico Cirujano - Traumatología y Ortopedia</p>
         </div>
-        <h1 style="color: #638592; margin:0;">CliniBienVital</h1>
-        <p>Centro de rehabilitación</p>
+        <h1 style="color: #000; margin:0; font-size: 26px;">CliniBienVital</h1>
+        <p style="margin:4px 0 0 0; font-size: 12px;">Centro de rehabilitación</p>
     </div>
 
     <div style="margin-bottom: 20px;">
-        <h2 id="tipo-doc-titulo" style="text-align:center; text-decoration: underline; text-transform: uppercase;"></h2>
-        <p><strong>Fecha:</strong> <span id="fecha-doc"></span></p>
-        <p><strong>Paciente:</strong> <span id="paciente-doc"></span></p>
-        <p><strong>RUT Paciente:</strong> <span id="rut-doc"></span></p>
-        <p><strong>Fecha de nacimiento:</strong> <span id="fecha-nacimiento-doc"></span></p>
+        <h2 id="tipo-doc-titulo" style="text-align:center; text-decoration: underline; text-transform: uppercase; font-size: 18px; margin-bottom: 12px;"></h2>
+        <p style="margin: 0 0 6px 0; font-size: 13px;"><strong>Fecha:</strong> <span id="fecha-doc"></span></p>
+        <p style="margin: 0 0 6px 0; font-size: 13px;"><strong>Paciente:</strong> <span id="paciente-doc"></span></p>
+        <p style="margin: 0 0 6px 0; font-size: 13px;"><strong>RUT Paciente:</strong> <span id="rut-doc"></span></p>
+        <p style="margin: 0 0 6px 0; font-size: 13px;"><strong>Fecha de nacimiento:</strong> <span id="fecha-nacimiento-doc"></span></p>
+        <p style="margin: 0 0 6px 0; font-size: 13px;"><strong>Edad:</strong> <span id="edad-doc"></span></p>
+        <p style="margin: 0 0 6px 0; font-size: 13px;"><strong>Direccion:</strong> <span id="direccion-doc"></span></p>
     </div>
 
-    <div id="contenido-doc" style="min-height: 350px; font-size: 18px; line-height: 1.6; white-space: pre-wrap;"></div>
+    <div id="contenido-doc" style="min-height: 92mm; font-size: 15px; line-height: 1.55; white-space: pre-wrap;"></div>
 
     <div class="footer-receta">
         <div style="width: 250px; border-top: 1px solid #000; margin: 0 auto 10px auto;"></div>
-        <p>Firma y Timbre Médico</p>
-        <p style="margin-top: 20px;"><small>Documento generado en CliniBienVital</small></p>
+        <p style="margin: 0; font-size: 12px;">Firma y Timbre Médico</p>
+        <p style="margin-top: 12px; font-size: 11px;"><small>Documento generado en CliniBienVital</small></p>
     </div>
 </div>
 
@@ -88,23 +94,52 @@
 <script>
 const URL = CONFIG.API_URL;
 const pacienteActual = localStorage.getItem("pacienteActual");
+const logoDocumento = new window.URL("logoclinica.png", window.location.href).href;
 let datosCompletosPaciente = { rut: "", fechaNacimiento: "", edad: "", direccion: "", telefono: "", correo: "" };
+
+function normalizarFecha(valor) {
+    if (!valor) return "";
+    if (typeof valor === "string" && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(valor)) return valor;
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return valor;
+    return fecha.toLocaleDateString("es-CL");
+}
+
+function calcularEdadDesdeFecha(valor) {
+    if (!valor) return "";
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return "";
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fecha.getFullYear();
+    const diferenciaMes = hoy.getMonth() - fecha.getMonth();
+    if (diferenciaMes < 0 || (diferenciaMes === 0 && hoy.getDate() < fecha.getDate())) edad--;
+    return edad >= 0 ? String(edad) : "";
+}
+
+function elegirDato(registros, indice) {
+    for (const fila of registros) {
+        const valor = (fila[indice] || "").toString().trim();
+        if (valor) return valor;
+    }
+    return "";
+}
 
 if (!pacienteActual) window.location.href = "pacientes.html";
 document.getElementById("nombre-display").innerText = pacienteActual;
+document.getElementById("logo-doc").src = logoDocumento;
 
 fetch(URL)
     .then(res => res.json())
     .then(data => {
-        const registro = data.find(fila => fila[1] === pacienteActual);
-        if (registro) {
+        const registros = data.slice(1).filter(fila => fila[1] === pacienteActual);
+        if (registros.length) {
             datosCompletosPaciente = {
-                rut: registro[2] || "",
-                fechaNacimiento: registro[3] || "",
-                edad: registro[4] || "",
-                direccion: registro[5] || "",
-                telefono: registro[6] || "",
-                correo: registro[7] || ""
+                rut: elegirDato(registros, 2),
+                fechaNacimiento: elegirDato(registros, 3),
+                edad: elegirDato(registros, 4),
+                direccion: elegirDato(registros, 5),
+                telefono: elegirDato(registros, 6),
+                correo: elegirDato(registros, 7)
             };
         }
     });
@@ -120,10 +155,14 @@ function generar(tipo) {
 function previsualizar() {
     const texto = document.getElementById("texto-doc").value;
     if (!texto.trim()) return alert("Por favor, escriba el contenido del documento.");
+    const fechaNacimiento = normalizarFecha(datosCompletosPaciente.fechaNacimiento) || "No registrada";
+    const edad = datosCompletosPaciente.edad || calcularEdadDesdeFecha(datosCompletosPaciente.fechaNacimiento) || "No registrada";
 
     document.getElementById("paciente-doc").innerText = pacienteActual;
     document.getElementById("rut-doc").innerText = datosCompletosPaciente.rut || "No registrado";
-    document.getElementById("fecha-nacimiento-doc").innerText = datosCompletosPaciente.fechaNacimiento || "No registrada";
+    document.getElementById("fecha-nacimiento-doc").innerText = fechaNacimiento;
+    document.getElementById("edad-doc").innerText = edad;
+    document.getElementById("direccion-doc").innerText = datosCompletosPaciente.direccion || "No registrada";
     document.getElementById("fecha-doc").innerText = new Date().toLocaleDateString();
     document.getElementById("contenido-doc").innerText = texto;
 
@@ -171,3 +210,4 @@ function volverAEditar() {
 </script>
 </body>
 </html>
+
