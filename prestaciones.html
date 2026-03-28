@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen de Prestaciones - CliniBienVital</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        body { background: #d9e0e6; }
+        .panel-prestaciones { max-width: 1040px; margin: 24px auto 40px; }
+        .barra-acciones { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+        .barra-acciones button { width: auto; min-width: 190px; margin-top: 0; }
+        .panel-carga {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            padding: 18px;
+            margin-bottom: 18px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 14px;
+            align-items: end;
+        }
+        .panel-carga label { display: block; font-weight: 700; color: #2c3e50; margin-bottom: 6px; }
+        .panel-carga select { margin-top: 0; }
+        .ayuda { grid-column: 1 / -1; font-size: 0.92rem; color: #5b6b7a; }
+        .documento {
+            background: #fff;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 34px 42px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+            color: #1f2933;
+        }
+        .encabezado-doc { text-align: center; margin-bottom: 28px; }
+        .encabezado-doc h1 { margin: 0; font-size: 1.9rem; color: #1b2a41; }
+        .encabezado-doc h2 { margin: 10px 0 8px; font-size: 1.2rem; font-style: italic; font-weight: 500; }
+        .encabezado-doc p {
+            margin: 14px 0 0;
+            text-align: left;
+            line-height: 1.5;
+            border-top: 1px solid #1f2933;
+            padding-top: 12px;
+        }
+        .seccion-datos { margin: 34px 0 24px; display: grid; gap: 14px; }
+        .fila-dato { display: grid; grid-template-columns: 230px 1fr; gap: 14px; align-items: center; }
+        .fila-dato label { font-style: italic; font-size: 1.02rem; }
+        .fila-dato input, .fila-dato textarea {
+            margin-top: 0;
+            border: none;
+            border-bottom: 1px solid #c7d0d9;
+            border-radius: 0;
+            padding: 8px 4px;
+            background: transparent;
+            font-size: 1rem;
+        }
+        .titulo-seccion { margin: 30px 0 14px; font-size: 1.2rem; font-weight: 700; }
+        .tabla-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 10px 6px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+        th { font-size: 0.95rem; color: #52606d; }
+        td input {
+            margin-top: 0;
+            padding: 6px 4px;
+            border: none;
+            border-bottom: 1px solid #d7dde3;
+            border-radius: 0;
+            background: transparent;
+        }
+        .col-n { width: 48px; }
+        .col-cantidad { width: 90px; }
+        .col-codigo { width: 130px; }
+        .col-total { width: 120px; }
+        .totales { margin-top: 28px; display: flex; justify-content: flex-end; }
+        .total-box {
+            min-width: 320px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            border-top: 1px solid #1f2933;
+            padding-top: 12px;
+        }
+        .fechas-box {
+            margin-top: 42px;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+        .fechas-box textarea {
+            margin-top: 0;
+            min-height: 72px;
+            border: none;
+            border-bottom: 1px solid #c7d0d9;
+            border-radius: 0;
+            padding: 8px 4px;
+            background: transparent;
+        }
+        .estado { margin-top: 10px; color: #52606d; font-size: 0.92rem; }
+        @media print {
+            .app-header, .barra-acciones, .panel-carga { display: none !important; }
+            body { background: #fff; }
+            .panel-prestaciones { margin: 0; max-width: none; }
+            .documento { box-shadow: none; margin: 0; max-width: none; padding: 22px 28px; }
+        }
+        @media (max-width: 760px) {
+            .panel-carga, .fila-dato, .fechas-box { grid-template-columns: 1fr; gap: 8px; }
+            .documento { padding: 22px 18px; }
+            .total-box { min-width: 0; width: 100%; }
+            th, td { padding: 8px 5px; font-size: 0.92rem; }
+            td input { min-width: 90px; font-size: 0.92rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="logoclinica.png" alt="Logo Clinica" style="height: 50px;">
+            <h1 style="color: white; margin: 0;">CliniBienVital</h1>
+        </div>
+    </header>
+
+    <div class="panel-prestaciones">
+        <div class="barra-acciones">
+            <button class="btn-volver" onclick="window.location.href='index.html'">Volver al Inicio</button>
+            <button class="btn-documentos" onclick="window.print()">Imprimir Resumen</button>
+        </div>
+
+        <div class="panel-carga">
+            <div>
+                <label for="selector-paciente">Paciente</label>
+                <select id="selector-paciente">
+                    <option value="">Cargando pacientes...</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn-guardar" onclick="cargarPacienteSeleccionado()">Cargar Datos</button>
+            </div>
+            <div class="ayuda">
+                Este resumen usa solo las fechas de sesiones realizadas. Si la paciente tiene 7 sesiones se aplica el pack 7; si tiene 10 o más, se aplica el pack 10.
+            </div>
+        </div>
+
+        <div class="documento">
+            <div class="encabezado-doc">
+                <h1>SERVIREP EIRL</h1>
+                <h2>Servicios Integrales de Rehabilitación Personalizados</h2>
+                <p>Servicios Médicos, Paramédicos, Rehabilitación y acondicionamiento Físico. Rut 52001323-7. Teléfono: 222660036. Avenida Echeñique 5037, Ñuñoa Santiago de Chile.</p>
+            </div>
+
+            <div class="seccion-datos">
+                <div class="fila-dato">
+                    <label for="nombre-paciente">Nombre del Paciente:</label>
+                    <input id="nombre-paciente" value="">
+                </div>
+                <div class="fila-dato">
+                    <label for="rut-paciente">Rut del Paciente:</label>
+                    <input id="rut-paciente" value="">
+                </div>
+                <div class="fila-dato">
+                    <label for="rut-medico">Rut médico tratante:</label>
+                    <input id="rut-medico" value="14660564-8">
+                </div>
+                <div class="fila-dato">
+                    <label for="rut-prestador">Rut Prestador:</label>
+                    <input id="rut-prestador" value="52001323-7">
+                </div>
+                <div class="fila-dato">
+                    <label for="rut-kinesiologo">Rut. Kinesiólogo:</label>
+                    <input id="rut-kinesiologo" value="14694500-7">
+                </div>
+                <div class="fila-dato">
+                    <label for="numero-boleta">N° de Boleta:</label>
+                    <input id="numero-boleta" value="265">
+                </div>
+            </div>
+
+            <div class="titulo-seccion">Resumen de servicios prestados:</div>
+
+            <div class="tabla-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-n">N°</th>
+                        <th>Prestación</th>
+                        <th class="col-cantidad">Cantidad</th>
+                        <th class="col-codigo">Código</th>
+                        <th class="col-total">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1)</td>
+                        <td><input id="prestacion-1" value="Evaluación"></td>
+                        <td><input id="cantidad-1" value="x 2"></td>
+                        <td><input id="codigo-1" value="0601001"></td>
+                        <td><input id="total-1" value="20000"></td>
+                    </tr>
+                    <tr>
+                        <td>2)</td>
+                        <td><input id="prestacion-2" value="Ultrasonido"></td>
+                        <td><input id="cantidad-2" value="x 10"></td>
+                        <td><input id="codigo-2" value="0601011"></td>
+                        <td><input id="total-2" value="111375"></td>
+                    </tr>
+                    <tr>
+                        <td>3)</td>
+                        <td><input id="prestacion-3" value="Ultra termia"></td>
+                        <td><input id="cantidad-3" value="x 10"></td>
+                        <td><input id="codigo-3" value="0601009"></td>
+                        <td><input id="total-3" value="111375"></td>
+                    </tr>
+                    <tr>
+                        <td>4)</td>
+                        <td><input id="prestacion-4" value="Masoterapia"></td>
+                        <td><input id="cantidad-4" value="x 10"></td>
+                        <td><input id="codigo-4" value="0601022"></td>
+                        <td><input id="total-4" value="111375"></td>
+                    </tr>
+                    <tr>
+                        <td>5)</td>
+                        <td><input id="prestacion-5" value="Laserterapia"></td>
+                        <td><input id="cantidad-5" value="x 10"></td>
+                        <td><input id="codigo-5" value="0601008"></td>
+                        <td><input id="total-5" value="111375"></td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <div class="totales">
+                <div class="total-box">
+                    <span>Total</span>
+                    <input id="total-general" value="" style="text-align:right; max-width: 170px;">
+                </div>
+            </div>
+
+            <div class="fechas-box">
+                <label for="fechas-prestaciones">Fecha prestaciones:</label>
+                <textarea id="fechas-prestaciones"></textarea>
+            </div>
+
+            <div id="estado-carga" class="estado"></div>
+        </div>
+    </div>
+
+    <script src="url.js"></script>
+    <script>
+        const URL_BASE = CONFIG.API_URL;
+        const pacientesMap = {};
+        const sesionesMap = {};
+        const PACKS = {
+            7: {
+                cantidades: ["x 2", "x 7", "x 7", "x 7", "x 7"],
+                totales: ["20000", "90375", "90375", "90375", "90375"]
+            },
+            10: {
+                cantidades: ["x 2", "x 10", "x 10", "x 10", "x 10"],
+                totales: ["20000", "111375", "111375", "111375", "111375"]
+            }
+        };
+
+        function normalizarFecha(valor) {
+            const fecha = new Date(valor);
+            return Number.isNaN(fecha.getTime()) ? null : fecha;
+        }
+
+        function formatearListaFechas(fechas) {
+            if (!fechas.length) return "";
+            const fechasOrdenadas = [...fechas].sort((a, b) => a - b);
+            const ultimo = fechasOrdenadas[fechasOrdenadas.length - 1];
+            const dias = fechasOrdenadas.map(fecha => fecha.getDate());
+            const mes = ultimo.toLocaleDateString("es-CL", { month: "long" });
+            const anio = ultimo.getFullYear();
+            return `${dias.join(",")} de ${mes} del ${anio}`;
+        }
+
+        function actualizarEstado(texto) {
+            document.getElementById("estado-carga").innerText = texto || "";
+        }
+
+        function poblarPacientes() {
+            const selector = document.getElementById("selector-paciente");
+            const nombres = Object.keys(pacientesMap).sort((a, b) => a.localeCompare(b, "es"));
+            selector.innerHTML = '<option value="">Seleccione una paciente...</option>';
+            nombres.forEach(nombre => {
+                const option = document.createElement("option");
+                option.value = nombre;
+                option.textContent = nombre;
+                selector.appendChild(option);
+            });
+        }
+
+        function leerNumero(texto) {
+            return parseFloat(String(texto || "0").replace(/\./g, "").replace(",", ".")) || 0;
+        }
+
+        function formatearEntero(valor) {
+            return Number(valor || 0).toLocaleString("es-CL", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        function recalcularTotalGeneral() {
+            let total = 0;
+            for (let i = 1; i <= 5; i++) {
+                total += leerNumero(document.getElementById(`total-${i}`).value);
+            }
+            document.getElementById("total-general").value = `$ ${formatearEntero(total)}`;
+        }
+
+        function aplicarPack(cantidadSesiones) {
+            const pack = cantidadSesiones >= 10 ? PACKS[10] : (cantidadSesiones >= 7 ? PACKS[7] : null);
+
+            if (!pack) {
+                document.getElementById("cantidad-1").value = "x 2";
+                document.getElementById("total-1").value = "20000";
+                for (let i = 2; i <= 5; i++) {
+                    document.getElementById(`cantidad-${i}`).value = `x ${cantidadSesiones}`;
+                    document.getElementById(`total-${i}`).value = "";
+                }
+                recalcularTotalGeneral();
+                return 0;
+            }
+
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`cantidad-${i}`).value = pack.cantidades[i - 1];
+                document.getElementById(`total-${i}`).value = pack.totales[i - 1];
+            }
+            recalcularTotalGeneral();
+            return cantidadSesiones >= 10 ? 10 : 7;
+        }
+
+        function cargarPacienteSeleccionado() {
+            const nombre = document.getElementById("selector-paciente").value;
+            if (!nombre) {
+                actualizarEstado("Seleccione una paciente para cargar el resumen.");
+                return;
+            }
+
+            const datosPaciente = pacientesMap[nombre] || {};
+            const sesiones = (sesionesMap[nombre] || []).filter(Boolean).sort((a, b) => a - b);
+            const cantidad = sesiones.length;
+            const packAplicado = aplicarPack(cantidad);
+
+            document.getElementById("nombre-paciente").value = nombre;
+            document.getElementById("rut-paciente").value = datosPaciente.rut || "";
+            document.getElementById("fechas-prestaciones").value = formatearListaFechas(sesiones);
+
+            if (!cantidad) {
+                actualizarEstado(`La paciente ${nombre} no tiene sesiones registradas en las tablas consultadas.`);
+                return;
+            }
+
+            if (!packAplicado) {
+                actualizarEstado(`La paciente ${nombre} tiene ${cantidad} sesiones registradas. Como no llega a 7, el resumen quedó para revisión manual.`);
+                return;
+            }
+
+            actualizarEstado(`Se cargaron ${cantidad} sesiones registradas para ${nombre}. Se aplicó el pack de ${packAplicado} sesiones.`);
+        }
+
+        Promise.all([
+            fetch(URL_BASE + "?tabla=Hoja 1").then(res => res.json()),
+            fetch(URL_BASE + "?tabla=Sesiones").then(res => res.json())
+        ])
+        .then(([activos, sesionesActivas]) => {
+            activos.slice(1).forEach(fila => {
+                const nombre = (fila[1] || "").toString().trim();
+                if (!nombre || pacientesMap[nombre]) return;
+                pacientesMap[nombre] = { rut: fila[2] || "" };
+            });
+
+            sesionesActivas.slice(1).forEach(fila => {
+                const nombre = (fila[1] || "").toString().trim();
+                const fecha = normalizarFecha(fila[0]);
+                if (!nombre || !fecha || !pacientesMap[nombre]) return;
+                if (!sesionesMap[nombre]) sesionesMap[nombre] = [];
+                sesionesMap[nombre].push(fecha);
+            });
+
+            poblarPacientes();
+            recalcularTotalGeneral();
+            actualizarEstado("Seleccione una paciente para generar el resumen según sus sesiones.");
+        })
+        .catch(error => {
+            console.error("Error al cargar datos:", error);
+            actualizarEstado("No se pudieron cargar pacientes y sesiones.");
+        });
+    </script>
+</body>
+</html>

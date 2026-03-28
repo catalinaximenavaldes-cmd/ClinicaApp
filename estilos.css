@@ -14,6 +14,7 @@ body {
     padding: 0; margin: 0;
     background-color: var(--fondo-pagina);
     display: flex; flex-direction: column; align-items: center;
+    overflow-x: hidden;
 }
 
 /* --- HEADER Y LOGO --- */
@@ -143,6 +144,8 @@ body {
     border-left: 8px solid #3498db;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     cursor: pointer;
     font-weight: bold;
 }
@@ -191,11 +194,60 @@ button:active { transform: scale(0.98); }
 
 /* --- RESPONSIVO --- */
 @media (max-width: 800px) {
+    .app-header {
+        padding: 12px;
+    }
+    .app-header h1 {
+        font-size: 1.35rem;
+        line-height: 1.2;
+        text-align: center;
+    }
+    .app-header img {
+        height: 36px;
+        margin-right: 8px;
+    }
+    .main-content {
+        width: 100%;
+        padding: 14px;
+    }
+    .card-paciente {
+        padding: 16px;
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
     .perfil-paciente {
         grid-template-columns: 1fr;
-        padding: 20px;
+        padding: 18px;
+        gap: 18px;
     }
     .datos-personales, .columna-botones, .contenedor-diagnostico {
         grid-column: 1;
+    }
+    .perfil-paciente h3 {
+        font-size: 1.35rem;
+    }
+    .card-agendar {
+        padding: 16px;
+    }
+    input, textarea, select {
+        padding: 12px;
+        font-size: 15px;
+    }
+    button {
+        padding: 14px;
+        font-size: 15px;
+    }
+    .header-nota {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (min-width: 1400px) {
+    .main-content {
+        max-width: 1280px;
+    }
+    .perfil-paciente {
+        grid-template-columns: 1.7fr 1fr;
     }
 }

@@ -23,6 +23,7 @@
         .btn-nuevo { background-color: #27ae60; color: white; }
         .btn-activos { background-color: #3498db; color: white; }
         .btn-historicos { background-color: #7f8c8d; color: white; }
+        .btn-resumenes { background-color: #16a085; color: white; }
         
         /* Nuevo botón para la Agenda */
         .btn-agenda { background-color: #9b59b6; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -49,6 +50,18 @@
             width: 100%; padding: 10px; margin: 15px 0;
             border: 1px solid #ccc; border-radius: 5px; font-size: 18px; text-align: center;
         }
+        @media (max-width: 640px) {
+            .menu-botones {
+                margin-top: 20px !important;
+            }
+            .menu-botones button {
+                padding: 14px;
+                font-size: 15px;
+            }
+            .login-card {
+                padding: 22px 18px;
+            }
+        }
     </style>
 </head>
 
@@ -63,15 +76,17 @@
     <div class="main-content">
         <h2 style="text-align: center; color: #2c3e50;">Panel de Control</h2>
 
-        <div class="menu-botones" style="margin-top:30px;">
+        <div class="menu-botones" style="margin-top:30px; max-width: 560px; margin-left:auto; margin-right:auto;">
             <button class="btn-agenda" onclick="window.location.href='Agenda.html'">📅 Agenda</button>
             <button class="btn-nuevo" onclick="window.location.href='nuevopaciente.html'">➕ Ingresar nuevo paciente</button>
             <button class="btn-activos" onclick="window.location.href='pacientes.html'">👥 Ver pacientes</button>
             <button class="btn-historicos" onclick="window.location.href='historicos.html'">📁 Historial Clínico</button>
 
+
              <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
-            <button class="btn-admin" onclick="abrirLogin()">📦 Control de Stock (Admin)</button>
+            <button class="btn-admin" onclick="abrirLogin('admin')">📦 Control de Stock (Admin)</button>
+            <button class="btn-resumenes" onclick="abrirLogin('resumenes')">🧾 Resumen de Servicios</button>
         </div>
     </div> 
 
@@ -87,8 +102,10 @@
 
     <script>
         const CLAVE_MAESTRA = "2026"; 
+        let destinoProtegido = "admin";
 
-        function abrirLogin() {
+        function abrirLogin(destino = "admin") {
+            destinoProtegido = destino;
             document.getElementById("modal-login").style.display = "flex";
             document.getElementById("pass-admin").focus();
         }
@@ -102,7 +119,7 @@
             const input = document.getElementById("pass-admin").value;
             if (input === CLAVE_MAESTRA) {
                 localStorage.setItem("rol", "admin");
-                window.location.href = "stock.html";
+                window.location.href = destinoProtegido === "resumenes" ? "prestaciones.html" : "stock.html";
             } else {
                 alert("Clave incorrecta. Solo el administrador tiene acceso.");
                 cerrarLogin();

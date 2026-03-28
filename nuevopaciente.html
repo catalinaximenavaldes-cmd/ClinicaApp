@@ -59,8 +59,13 @@
         </div><br>
 
         <div class="container">
-            Diagnóstico Inicial / Motivo de consulta:<br>
-            <input type="text" id="diagnostico" placeholder="Ej: Esguince de tobillo">
+            Tratamiento activo:<br>
+            <input type="text" id="tratamiento_activo" placeholder="Ej: Kinesioterapia, 10 sesiones">
+        </div><br>
+
+        <div class="container">
+            Motivo de consulta:<br>
+            <input type="text" id="motivo_consulta" placeholder="Ej: Dolor lumbar de 3 días de evolución">
         </div><br>
 
         <button onclick="guardarPaciente()" class="btn-guardar">💾 Guardar Paciente</button>
@@ -96,7 +101,8 @@ async function guardarPaciente() {
     const direccion = document.getElementById("direccion").value.trim();
     const telefono = document.getElementById("telefono").value.trim();
     const correo = document.getElementById("correo").value.trim();
-    const diagnostico = document.getElementById("diagnostico").value.trim();
+    const tratamientoActivo = document.getElementById("tratamiento_activo").value.trim();
+    const motivoConsulta = document.getElementById("motivo_consulta").value.trim();
 
     if (!nombre || !rut || !fecha_nacimiento) {
         alert("Nombre, RUT y Fecha de Nacimiento son obligatorios.");
@@ -107,14 +113,21 @@ async function guardarPaciente() {
     btn.innerText = "⏳ Guardando...";
     btn.disabled = true;
 
-    const datos = {
+    const datosPaciente = {
         nombre: nombre,
         rut: rut,
         fecha_nacimiento: fecha_nacimiento,
         direccion: direccion,
         telefono: telefono,
         correo: correo,
-        evolucion: diagnostico || "Ingreso inicial registrado"
+        tratamiento_activo: tratamientoActivo,
+        tratamientoActivo: tratamientoActivo
+    };
+
+    const datosEvolucion = {
+        nombre: nombre,
+        accion: "guardarEvolucionNueva",
+        evolucion: motivoConsulta || "Ingreso inicial registrado"
     };
 
     try {
@@ -122,7 +135,13 @@ async function guardarPaciente() {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
+            body: JSON.stringify(datosPaciente)
+        });
+        await fetch(CONFIG.API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datosEvolucion)
         });
         alert("✅ Paciente guardado con éxito.");
         window.location.href = "index.html";
