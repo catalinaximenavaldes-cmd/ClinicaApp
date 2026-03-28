@@ -1,7 +1,7 @@
 // url.js
 const CONFIG = {
     // Pega aquí la URL de tu implementación de Apps Script
-    API_URL: "https://script.google.com/macros/s/AKfycbw-XWSQloa9KF8ov9WVF_jvS-E9RpE0zGusjBizeYuO0L47moipZ9urqYubH5kZuk2h/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbxv_-oj0C9yG2iRBItEmcAr6PYlIaM4NTXLqWt_Jxe_d2xn9XJn16omOIhQp45FQaFJ/exec",
 
     // Puedes agregar más configuraciones aquí si las necesitas en el futuro
     VERSION: "1.0.1"
