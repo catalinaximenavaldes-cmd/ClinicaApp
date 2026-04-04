@@ -1,0 +1,253 @@
+:root {
+    --azul-clinico: #2c3e50;
+    --azul-documentos: #2980b9; /* Nuevo azul para recetas */
+    --verde-salud: #27ae60;
+    --morado-agenda: #f4ecf7;   /* Fondo morado suave */
+    --morado-fuerte: #8e44ad;   /* Bordes y botones de agenda */
+    --fondo-pagina: #d1d8e0; 
+    --blanco-puro: #ffffff;
+    --sombra: rgba(0, 0, 0, 0.2);
+}
+
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 0; margin: 0;
+    background-color: var(--fondo-pagina);
+    display: flex; flex-direction: column; align-items: center;
+    overflow-x: hidden;
+}
+
+/* --- HEADER Y LOGO --- */
+.app-header {
+    background-color: var(--azul-clinico);
+    color: white;
+    padding: 15px;
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 5px solid var(--verde-salud);
+    width: 100%; box-sizing: border-box;
+    position: sticky; top: 0; z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.app-header img {
+    height: 45px;
+    margin-right: 15px;
+    filter: brightness(0) invert(1); 
+}
+
+/* --- CONTENEDOR PRINCIPAL --- */
+.main-content {
+    padding: 20px;
+    width: 95%;
+    max-width: 1100px;
+    box-sizing: border-box;
+}
+
+/* --- TARJETAS DE PACIENTES (LISTADO) --- */
+.card-paciente {
+    background-color: var(--blanco-puro);
+    padding: 22px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 6px 15px var(--sombra);
+    border: 1px solid #bdc3c7;
+    border-left: 10px solid var(--verde-salud);
+    transition: 0.2s;
+    color: var(--azul-clinico);
+    font-size: 1.1rem;
+    font-weight: bold;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.card-paciente:hover {
+    transform: translateX(5px);
+    background-color: #f9f9f9;
+}
+
+/* --- FICHA DEL PACIENTE --- */
+.perfil-paciente {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid var(--verde-salud);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; 
+    gap: 25px;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: start;
+}
+
+.perfil-paciente h3 {
+    grid-column: 1 / -1; 
+    margin: 0;
+    font-size: 1.8rem;
+    color: var(--azul-clinico);
+    border-bottom: 3px solid #f1f1f1;
+    padding-bottom: 12px;
+}
+
+.datos-personales {
+    grid-column: 1;
+}
+
+.contenedor-diagnostico {
+    grid-column: 1;
+    background: #f0f7ff;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #d6eaf8;
+    border-left: 6px solid #2980b9;
+    margin-top: 15px;
+}
+
+/* COLUMNA DE BOTONES */
+.columna-botones {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.columna-botones button {
+    margin-top: 0 !important; 
+    padding: 14px !important;
+}
+
+/* --- RECUADRO MORADO DE AGENDA --- */
+.card-agendar {
+    grid-column: 1 / -1;
+    width: 100%;
+    background-color: var(--morado-agenda);
+    border: 2px solid #d2b4de;
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 20px;
+    box-sizing: border-box;
+}
+
+.card-agendar h4 {
+    margin: 0 0 10px 0;
+    color: var(--morado-fuerte);
+}
+
+/* --- ACORDEONES DE EVOLUCIÓN --- */
+.header-nota {
+    background: #fff;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #bdc3c7;
+    border-left: 8px solid #3498db;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* --- FORMULARIOS Y BOTONES --- */
+input, textarea, select {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #7f8c8d;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-top: 10px;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    padding: 16px;
+    margin-top: 15px;
+    border-radius: 10px;
+    border: none;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: 0.2s;
+}
+
+button:active { transform: scale(0.98); }
+
+.btn-guardar { background: var(--verde-salud); color: white; }
+.btn-volver { background: var(--azul-clinico); color: white; }
+
+/* Botón Recetas (Ahora Azul) */
+.btn-documentos { background: var(--azul-documentos); color: white; }
+
+.btn-sesiones { background: #34495e; color: white; }
+
+/* Botón Agenda (Morado) */
+.btn-confirmar-cita { background: var(--morado-fuerte); color: white; }
+
+.visor-sesiones {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+/* --- RESPONSIVO --- */
+@media (max-width: 800px) {
+    .app-header {
+        padding: 12px;
+    }
+    .app-header h1 {
+        font-size: 1.35rem;
+        line-height: 1.2;
+        text-align: center;
+    }
+    .app-header img {
+        height: 36px;
+        margin-right: 8px;
+    }
+    .main-content {
+        width: 100%;
+        padding: 14px;
+    }
+    .card-paciente {
+        padding: 16px;
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+    .perfil-paciente {
+        grid-template-columns: 1fr;
+        padding: 18px;
+        gap: 18px;
+    }
+    .datos-personales, .columna-botones, .contenedor-diagnostico {
+        grid-column: 1;
+    }
+    .perfil-paciente h3 {
+        font-size: 1.35rem;
+    }
+    .card-agendar {
+        padding: 16px;
+    }
+    input, textarea, select {
+        padding: 12px;
+        font-size: 15px;
+    }
+    button {
+        padding: 14px;
+        font-size: 15px;
+    }
+    .header-nota {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (min-width: 1400px) {
+    .main-content {
+        max-width: 1280px;
+    }
+    .perfil-paciente {
+        grid-template-columns: 1.7fr 1fr;
+    }
+}

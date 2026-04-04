@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Evolución - CliniBienVital</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .textarea-evolucion { width: 100%; height: 300px; padding: 15px; box-sizing: border-box; border: 2px solid #34495e; border-radius: 8px; resize: vertical; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; line-height: 1.5; margin-top: 10px; }
+        .paciente-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dee2e6; border-left: 8px solid #27ae60; }
+        .datos-secundarios { font-size: 14px; color: #7f8c8d; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+            <img src="logoclinica.png" alt="Logo CliniBienVital" style="height: 50px; cursor: pointer;">
+            <h1 style="color: white; margin: 0;">CliniBienVital</h1>
+        </a>
+    </header>
+
+    <div class="main-content">
+        <button class="btn-volver" onclick="window.location.href='pacientes.html'">⬅️ Volver al Historial</button>
+        <hr>
+        <div class="paciente-box">
+            <strong>Ficha de atención:</strong>
+            <div id="nombre-paciente" style="font-size: 22px; color: #2c3e50; font-weight: bold;">Cargando nombre...</div>
+            <div id="detalles-paciente" class="datos-secundarios">Buscando datos del paciente...</div>
+        </div>
+        <h3>Redactar Evolución Clínica</h3>
+        <textarea id="resultado" class="textarea-evolucion" placeholder="Escriba aquí la evolución del paciente, novedades, constantes vitales y plan de tratamiento..."></textarea>
+        <button class="btn-guardar" onclick="guardarEvolucion()">💾 Guardar en Ficha Clínica</button>
+        <br><br>
+        <button onclick="window.history.back()" style="background: none; border: none; color: #7f8c8d; cursor: pointer; text-decoration: underline;">Cancelar y volver</button>
+    </div>
+
+<script src="url.js"></script>
+<script>
+const URL = CONFIG.API_URL;
+const pacienteActual = localStorage.getItem("pacienteActual");
+
+if (!pacienteActual) {
+    alert("Error: No se ha seleccionado un paciente.");
+    window.location.href = "pacientes.html";
+} else {
+    document.getElementById("nombre-paciente").innerText = "👤 " + pacienteActual;
+    cargarDatosPaciente();
+}
+
+function cargarDatosPaciente() {
+    fetch(URL)
+    .then(res => res.json())
+    .then(data => {
+        const registro = data.find(fila => fila[1] === pacienteActual);
+        if (registro) {
+            document.getElementById("detalles-paciente").innerHTML = `
+                🆔 <b>RUT:</b> ${registro[2] || 'N/A'} | 🎂 <b>Fecha de nacimiento:</b> ${registro[3] || 'N/A'} <br>
+                📅 <b>Edad:</b> ${registro[4] || 'N/A'} años | 🏠 <b>Dirección:</b> ${registro[5] || 'N/A'}
+            `;
+        } else {
+            document.getElementById("detalles-paciente").innerText = "No se encontraron datos básicos del paciente.";
+        }
+    })
+    .catch(err => {
+        console.error("Error al cargar datos:", err);
+        document.getElementById("detalles-paciente").innerText = "Error de conexión con la base de datos.";
+    });
+}
+
+function enviarDatosAppsScript(datos) {
+    const payload = JSON.stringify(datos);
+
+    if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
+        const enviado = navigator.sendBeacon(URL, blob);
+        return enviado ? Promise.resolve() : Promise.reject(new Error("No se pudo encolar el envio."));
+    }
+
+    return fetch(URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: payload
+    }).then(() => undefined);
+}
+
+function guardarEvolucion() {
+    const evolucion = document.getElementById("resultado").value;
+    if (!evolucion.trim()) {
+        alert("Por favor, redacte la evolución antes de guardar.");
+        return;
+    }
+
+    const btn = document.querySelector(".btn-guardar");
+    btn.innerText = "⏳ Guardando en ficha...";
+    btn.disabled = true;
+
+    const datos = {
+        nombre: pacienteActual,
+        accion: "guardarEvolucionNueva",
+        evolucion: evolucion
+    };
+
+    enviarDatosAppsScript(datos)
+    .then(() => {
+        alert("✅ Evolución guardada correctamente.");
+        window.location.href = "pacientes.html";
+    })
+    .catch(err => {
+        alert("❌ Error al guardar: " + err);
+        btn.innerText = "💾 Guardar en Ficha Clínica";
+        btn.disabled = false;
+    });
+}
+</script>
+</body>
+</html>

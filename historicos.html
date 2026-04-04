@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Altas - CliniBienVital</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .perfil-paciente { background: #fdfdfd; padding: 20px; border-radius: 12px; border: 2px solid #95a5a6; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .perfil-paciente p { margin: 8px 0; font-size: 0.95rem; color: #7f8c8d; border-bottom: 1px solid #f1f1f1; padding-bottom: 4px; }
+        .header-nota { background: #fff; padding: 15px; margin-top: 10px; border-radius: 8px; border: 1px solid #bdc3c7; border-left: 8px solid #7f8c8d; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; color: #34495e; }
+        .contenido-nota { display: none; background: #fdfdfd; padding: 15px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 10px; line-height: 1.6; }
+        .flecha { font-size: 12px; transition: 0.3s; }
+        .abierto .flecha { transform: rotate(180deg); }
+        .etiqueta-alta { background-color: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; vertical-align: middle; margin-left: 10px; }
+        .btn-reactivar { background-color: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 15px; transition: background 0.3s; }
+        .btn-reactivar:hover { background-color: #2980b9; }
+        .btn-eliminar-historico { background-color: #c0392b; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 15px; transition: background 0.3s; }
+        .btn-eliminar-historico:hover { background-color: #a93226; }
+        .bloque-info { background: #fff; border-radius: 10px; padding: 14px; margin: 16px 0; }
+        .bloque-diagnostico { border: 1px solid #d6eaf8; background: #f8fbff; }
+        .bloque-sesiones { border: 1px solid #e1d5f5; background: #fcf8ff; }
+        .sesion-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+        .sesion-item:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+            <img src="logoclinica.png" alt="Logo" style="height: 50px;">
+            <h1 style="color: white; margin: 0;">CliniBienVital</h1>
+        </a>
+    </header>
+
+    <div class="main-content">
+        <button class="btn-volver" onclick="window.location.href='index.html'">Inicio</button>
+        <h2 id="titulo-pagina" style="text-align:center; color: #7f8c8d;">Pacientes Dados de Alta</h2>
+        <div id="lista">Conectando con el archivo historico...</div>
+        <br>
+        <button id="btnVolverLista" style="display:none;" onclick="location.reload()" class="btn-volver">Volver a la lista de altas</button>
+    </div>
+
+<script src="url.js"></script>
+<script>
+const URL_BASE = CONFIG.API_URL;
+let pacientes = {};
+let historialPacientes = {};
+let diagnosticosPacientes = {};
+let sesionesPacientes = {};
+
+Promise.all([
+  fetch(URL_BASE + "?tabla=historicos").then(res => res.json()),
+  fetch(URL_BASE + "?tabla=historicos_evoluciones").then(res => res.json()),
+  fetch(URL_BASE + "?tabla=historicos_diagnosticos").then(res => res.json()),
+  fetch(URL_BASE + "?tabla=historicos_sesiones").then(res => res.json())
+])
+  .then(([dataHistoricos, dataEvoluciones, dataDiagnosticos, dataSesiones]) => {
+    pacientes = {};
+    historialPacientes = {};
+    diagnosticosPacientes = {};
+    sesionesPacientes = {};
+
+    for (let i = 1; i < dataHistoricos.length; i++) {
+      const fila = dataHistoricos[i];
+      const nombre = fila[1];
+      if (!nombre) continue;
+      if (!pacientes[nombre]) pacientes[nombre] = [];
+      pacientes[nombre].push({
+        fecha: fila[0] ? new Date(fila[0]) : new Date(),
+        rut: fila[2],
+        fechaNacimiento: fila[3],
+        edad: fila[4],
+        direccion: fila[5],
+        telefono: fila[6],
+        correo: fila[7],
+        tratamientoActivo: fila[9]
+      });
+    }
+
+    for (let i = 1; i < dataEvoluciones.length; i++) {
+      const fila = dataEvoluciones[i];
+      const nombre = fila[1];
+      if (!nombre) continue;
+      if (!historialPacientes[nombre]) historialPacientes[nombre] = [];
+      historialPacientes[nombre].push({
+        fecha: fila[0] ? new Date(fila[0]) : new Date(),
+        tipo: "Evolucion",
+        evolucion: fila[3] || ""
+      });
+    }
+
+    for (let i = 1; i < dataDiagnosticos.length; i++) {
+      const fila = dataDiagnosticos[i];
+      const nombre = fila[0];
+      if (!nombre) continue;
+      diagnosticosPacientes[nombre] = fila[1] || "";
+    }
+
+    for (let i = 1; i < dataSesiones.length; i++) {
+      const fila = dataSesiones[i];
+      const nombre = fila[1];
+      if (!nombre) continue;
+      if (!sesionesPacientes[nombre]) sesionesPacientes[nombre] = [];
+      sesionesPacientes[nombre].push({
+        fecha: fila[0] ? new Date(fila[0]) : null,
+        tratamiento: fila[2] || ""
+      });
+    }
+
+    mostrarLista();
+  })
+  .catch(error => {
+    console.error("Error:", error);
+    document.getElementById("lista").innerHTML = "<p>Error al cargar la ficha historica.</p>";
+  });
+
+function mostrarLista() {
+  document.getElementById("btnVolverLista").style.display = "none";
+  document.getElementById("titulo-pagina").innerText = "Pacientes Dados de Alta";
+  let html = "";
+  for (const nombre in pacientes) {
+    html += `<div class="card-paciente" style="border-left-color: #95a5a6;" onclick="verPaciente('${nombre}')"> ${nombre} <span class="etiqueta-alta">Alta</span></div>`;
+  }
+  document.getElementById("lista").innerHTML = html || "<p style='text-align:center;'>No hay pacientes en el archivo historico.</p>";
+}
+
+function verPaciente(nombre) {
+  document.getElementById("btnVolverLista").style.display = "block";
+  document.getElementById("titulo-pagina").innerText = "Expediente Historico";
+
+  const registros = [...(historialPacientes[nombre] || [])].sort((a, b) => b.fecha - a.fecha);
+  const perfil = [...pacientes[nombre]].sort((a, b) => a.fecha - b.fecha)[0];
+  const diagnostico = diagnosticosPacientes[nombre] || "No registrado";
+  const sesiones = [...(sesionesPacientes[nombre] || [])].sort((a, b) => {
+    const fechaA = a.fecha ? a.fecha.getTime() : 0;
+    const fechaB = b.fecha ? b.fecha.getTime() : 0;
+    return fechaB - fechaA;
+  });
+
+  const sesionesHtml = sesiones.length
+    ? sesiones.map(sesion => `
+        <div class="sesion-item">
+          <strong>${sesion.tratamiento || "Sin tratamiento"}</strong><br>
+          <span style="color:#7f8c8d;">${sesion.fecha ? sesion.fecha.toLocaleString() : "Sin fecha"}</span>
+        </div>
+      `).join("")
+    : "<p>No hay sesiones realizadas registradas.</p>";
+
+  let html = `
+    <div class="perfil-paciente">
+        <h3 style="margin-top:0; color:#7f8c8d;">Ficha Archivada: ${nombre}</h3>
+        <p><strong>RUT:</strong> ${perfil.rut || 'No registrado'}</p>
+        <p><strong>Fecha de nacimiento:</strong> ${perfil.fechaNacimiento || 'No registrada'}</p>
+        <p><strong>Edad:</strong> ${perfil.edad || 'No registrada'} años</p>
+        <p><strong>Direccion:</strong> ${perfil.direccion || 'No registrada'}</p>
+        <p><strong>Telefono:</strong> ${perfil.telefono || 'No registrado'}</p>
+        <p><strong>Correo:</strong> ${perfil.correo || 'No registrado'}</p>
+        <p><strong>Tratamiento activo:</strong> ${perfil.tratamientoActivo || 'No registrado'}</p>
+
+        <div class="bloque-info bloque-diagnostico">
+            <h4 style="margin:0 0 10px 0; color:#34495e;">Diagnostico Principal</h4>
+            <p style="white-space: pre-wrap; margin:0;">${diagnostico}</p>
+        </div>
+
+        <div class="bloque-info bloque-sesiones">
+            <h4 style="margin:0 0 10px 0; color:#6c3483;">Sesiones Realizadas</h4>
+            ${sesionesHtml}
+        </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <button onclick="reactivarPaciente('${nombre}')" class="btn-reactivar">Reactivar Paciente (Volver a Activos)</button>
+        <button onclick="eliminarPacienteHistorico('${nombre}')" class="btn-eliminar-historico">Eliminar Paciente de Historicos</button>
+        <p style="text-align:center; color:#e74c3c; font-weight:bold; font-size:13px; margin:0;">Este expediente es de solo lectura. Reactivalo para editar.</p>
+    </div>
+    <h4 style="color:#7f8c8d;">Historial de Atenciones Previas</h4>
+  `;
+
+  if (!registros.length) {
+    html += `<p>No hay evoluciones registradas.</p>`;
+  }
+
+  registros.forEach((registro, index) => {
+    const displayStyle = index === 0 ? "block" : "none";
+    const abiertoClase = index === 0 ? "abierto" : "";
+    html += `
+      <div class="contenedor-acordeon">
+          <div class="header-nota ${abiertoClase}" onclick="toggleNota(this)">
+              <span>${registro.tipo || "Registro"} - ${registro.fecha.toLocaleString()}</span>
+              <span class="flecha">▼</span>
+          </div>
+          <div class="contenido-nota" style="display: ${displayStyle}">
+              <p style="white-space: pre-wrap;">${registro.evolucion || ''}</p>
+          </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("lista").innerHTML = html;
+}
+
+function toggleNota(elemento) {
+  elemento.classList.toggle("abierto");
+  const contenido = elemento.nextElementSibling;
+  if (contenido) {
+    contenido.style.display = contenido.style.display === "block" ? "none" : "block";
+  }
+}
+
+function reactivarPaciente(nombre) {
+  if (confirm("¿Deseas devolver a " + nombre + " a la lista de pacientes actuales?")) {
+    const btn = document.querySelector(".btn-reactivar");
+    btn.innerText = "Reactivando...";
+    btn.disabled = true;
+
+    fetch(URL_BASE, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify({ accion: "reactivar", nombre: nombre })
+    })
+    .then(() => {
+      alert("Paciente reactivado con exito.");
+      window.location.href = "pacientes.html";
+    })
+    .catch(err => {
+      alert("Error al reactivar: " + err);
+      btn.innerText = "Reactivar Paciente (Volver a Activos)";
+      btn.disabled = false;
+    });
+  }
+}
+
+function eliminarPacienteHistorico(nombre) {
+  if (!confirm("¿Deseas eliminar por completo a " + nombre + " del archivo historico? Esta accion no se puede deshacer.")) {
+    return;
+  }
+
+  const btn = document.querySelector(".btn-eliminar-historico");
+  if (btn) {
+    btn.innerText = "Eliminando...";
+    btn.disabled = true;
+  }
+
+  fetch(URL_BASE, {
+    method: "POST",
+    mode: "no-cors",
+    body: JSON.stringify({ accion: "eliminarHistoricoCompleto", nombre: nombre })
+  })
+  .then(() => {
+    alert("Paciente historico eliminado.");
+    location.reload();
+  })
+  .catch(err => {
+    alert("Error al eliminar paciente historico: " + err);
+    if (btn) {
+      btn.innerText = "Eliminar Paciente de Historicos";
+      btn.disabled = false;
+    }
+  });
+}
+</script>
+</body>
+</html>
