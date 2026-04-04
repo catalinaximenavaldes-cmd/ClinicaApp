@@ -1,7 +1,7 @@
-const URL =
+﻿const URL =
   typeof CONFIG !== "undefined" && CONFIG.API_URL
     ? CONFIG.API_URL
-    : "https://script.google.com/macros/s/AKfycbw-XWSQloa9KF8ov9WVF_jvS-E9RpE0zGusjBizeYuO0L47moipZ9urqYubH5kZuk2h/exec";
+    : "https://script.google.com/macros/s/AKfycbz_o5PPXlSY8Q7kcIwKjVETz5m-lhU7TxZO84bo9OSE8zf8qsB0Fd6kijopc4gWy94/exec";
 
 let pacientes = {};
 let historialPacientes = {};
@@ -44,6 +44,18 @@ function normalizarFechaRegistro(valor) {
   return Number.isNaN(fecha.getTime()) ? new Date() : fecha;
 }
 
+function formatearFechaHora(valor) {
+  const fecha = valor instanceof Date ? valor : new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return "Sin fecha";
+  return fecha.toLocaleString("es-CL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
 function formatearFechaNacimiento(valor) {
   const fechaIso = normalizarFechaInput(valor);
   if (!fechaIso) return "No registrada";
@@ -67,6 +79,23 @@ function agregarAlHistorial(nombre, item) {
   if (!nombre) return;
   if (!historialPacientes[nombre]) historialPacientes[nombre] = [];
   historialPacientes[nombre].push(item);
+}
+
+function reconstruirHistorialDesdePacientes() {
+  historialPacientes = {};
+
+  Object.keys(pacientes).forEach(nombre => {
+    const registros = [...(pacientes[nombre] || [])].sort((a, b) => a.fecha - b.fecha);
+    registros.forEach((registro, index) => {
+      if (!registro.evolucion) return;
+      agregarAlHistorial(nombre, {
+        fecha: registro.fecha,
+        evolucion: registro.evolucion,
+        tabla: "Hoja 1",
+        tipo: index === 0 ? "Ingreso" : "Evolucion"
+      });
+    });
+  });
 }
 
 function getPrimerRegistro(nombre) {
@@ -118,7 +147,15 @@ async function cargarBaseDatos() {
       });
     }
 
+    reconstruirHistorialDesdePacientes();
     mostrarLista();
+
+    const pacienteGuardado = localStorage.getItem("pacienteActual") || "";
+    const volverAFichaPaciente = localStorage.getItem("volverAFichaPaciente") === "1";
+    if (volverAFichaPaciente && pacienteGuardado && pacientes[pacienteGuardado]) {
+      localStorage.removeItem("volverAFichaPaciente");
+      verPaciente(pacienteGuardado);
+    }
   } catch (error) {
     console.error("Error al conectar:", error);
     if (lista) lista.innerHTML = "Error al conectar.";
@@ -133,27 +170,14 @@ async function cargarHistorialCompleto() {
   }
 
   historialCargaPromise = (async () => {
-    historialPacientes = {};
+    reconstruirHistorialDesdePacientes();
 
     const pedidos = [
-      fetch(URL + "?tabla=Evoluciones").then(r => r.json()).catch(() => []),
       fetch(URL + "?tabla=Documentos").then(r => r.json()).catch(() => []),
       fetch(URL + "?tabla=Diagnosticos").then(r => r.json()).catch(() => [])
     ];
 
-    const [dataEvoluciones, dataDocumentos, dataDiagnosticos] = await Promise.all(pedidos);
-
-    if (Array.isArray(dataEvoluciones)) {
-      for (let i = 1; i < dataEvoluciones.length; i++) {
-        const fila = dataEvoluciones[i] || [];
-        agregarAlHistorial(fila[1], {
-          fecha: normalizarFechaRegistro(fila[0]),
-          evolucion: fila[3] || fila[8] || "",
-          tabla: "Evoluciones",
-          tipo: "Evolucion"
-        });
-      }
-    }
+    const [dataDocumentos, dataDiagnosticos] = await Promise.all(pedidos);
 
     if (Array.isArray(dataDocumentos)) {
       for (let i = 1; i < dataDocumentos.length; i++) {
@@ -215,12 +239,12 @@ async function verPaciente(nombre) {
     <div class="perfil-paciente">
       <h3 style="display:flex; justify-content:space-between; align-items:center;">
         <span>Ficha: ${escapeHtml(nombre)}</span>
-        <button class="btn-editar-ficha" onclick="abrirModalEdicion('${escapeHtml(nombre)}')" title="Editar ficha" aria-label="Editar ficha">✏️</button>
+        <button class="btn-editar-ficha" onclick="abrirModalEdicion('${escapeHtml(nombre)}')" title="Editar ficha" aria-label="Editar ficha">&#9998;</button>
       </h3>
       <div class="datos-personales">
         <p><strong>RUT:</strong> ${escapeHtml(perfil.rut || "No registrado")}</p>
         <p><strong>Fecha de nacimiento:</strong> ${escapeHtml(formatearFechaNacimiento(perfil.fechaNacimiento))}</p>
-        <p><strong>Edad:</strong> ${escapeHtml(String(perfil.edad || calcularEdadDesdeFecha(perfil.fechaNacimiento) || "No registrada"))} años</p>
+        <p><strong>Edad:</strong> ${escapeHtml(String(perfil.edad || calcularEdadDesdeFecha(perfil.fechaNacimiento) || "No registrada"))} anos</p>
         <p><strong>Direccion:</strong> ${escapeHtml(perfil.direccion || "No registrada")}</p>
         <p><strong>Telefono:</strong> ${escapeHtml(perfil.telefono || "No registrado")}</p>
         <p><strong>Correo:</strong> ${escapeHtml(perfil.correo || "No registrado")}</p>
@@ -276,7 +300,8 @@ function renderizarHistorial(nombre) {
   const contenedor = document.getElementById("historial-atenciones");
   if (!contenedor) return;
 
-  const registros = [...(historialPacientes[nombre] || [])].sort((a, b) => b.fecha - a.fecha);
+  const registrosCronologicos = [...(historialPacientes[nombre] || [])].sort((a, b) => a.fecha - b.fecha);
+  const registros = [...registrosCronologicos].reverse();
   let html = '<h4 style="color:#2c3e50; margin: 20px 0 10px 10px;" class="no-print">Historial de Atenciones</h4>';
 
   if (!registros.length) {
@@ -287,11 +312,12 @@ function renderizarHistorial(nombre) {
   html += registros
     .map((registro, index) => {
       const abierta = index === 0;
+      const numero = registrosCronologicos.findIndex(item => item === registro) + 1;
       return `
         <div class="contenedor-acordeon">
           <div class="header-nota ${abierta ? "abierto" : ""}" onclick="toggleNota(this)">
-            <span>${escapeHtml(registro.tipo || "Registro")} - ${escapeHtml(registro.fecha.toLocaleString())}</span>
-            <span>▼</span>
+            <span>${numero}- ${escapeHtml(registro.tipo || "Registro")} - ${escapeHtml(formatearFechaHora(registro.fecha))}</span>
+            <span>&#9662;</span>
           </div>
           <div class="contenido-nota" style="display:${abierta ? "block" : "none"};">
             <p style="white-space:pre-wrap;">${escapeHtml(registro.evolucion || "")}</p>
@@ -487,7 +513,7 @@ async function toggleSesiones(nombre) {
     const sesiones = sesionesCache
       .slice(1)
       .filter(fila => (fila[1] || "").toString().trim() === nombre)
-      .sort((a, b) => new Date(b[0]) - new Date(a[0]));
+      .sort((a, b) => new Date(a[0]) - new Date(b[0]));
 
     if (!sesiones.length) {
       visor.innerHTML = "<p>No hay sesiones registradas.</p>";
@@ -495,12 +521,12 @@ async function toggleSesiones(nombre) {
     }
 
     visor.innerHTML = sesiones
-      .map(fila => {
-        const fecha = fila[0] ? new Date(fila[0]).toLocaleString("es-CL") : "Sin fecha";
+      .map((fila, index) => {
+        const fecha = fila[0] ? formatearFechaHora(fila[0]) : "Sin fecha";
         const tratamiento = fila[2] || "Sin tratamiento";
         return `
           <div class="sesion-item">
-            <div><strong>${escapeHtml(tratamiento)}</strong></div>
+            <div><strong>Sesion ${index + 1}: ${escapeHtml(tratamiento)}</strong></div>
             <div class="sesion-fecha">${escapeHtml(fecha)}</div>
           </div>
         `;
@@ -597,7 +623,55 @@ async function eliminarPacienteCompleto(nombre) {
   }
 }
 
-function imprimirCarta(nombre) {
+function solicitarIndicacionesResumen() {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.background = "rgba(0,0,0,0.45)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.padding = "16px";
+    overlay.style.zIndex = "2000";
+
+    const modal = document.createElement("div");
+    modal.style.background = "#fff";
+    modal.style.width = "min(640px, 100%)";
+    modal.style.borderRadius = "14px";
+    modal.style.padding = "18px";
+    modal.style.boxShadow = "0 12px 30px rgba(0,0,0,0.2)";
+
+    modal.innerHTML = `
+      <h3 style="margin:0 0 10px; color:#2c3e50;">Indicaciones/Resumen</h3>
+      <p style="margin:0 0 12px; color:#5b6b7a;">Escribe un resumen breve para incluir en la ficha impresa.</p>
+      <textarea id="textarea-resumen-impresion" style="width:100%; min-height:180px; border:1px solid #cfd8e3; border-radius:10px; padding:12px; box-sizing:border-box; resize:vertical;"></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <button type="button" id="cancelar-resumen-impresion" style="padding:10px 14px; border:none; border-radius:8px; background:#ecf0f1; cursor:pointer;">Cancelar</button>
+        <button type="button" id="aceptar-resumen-impresion" style="padding:10px 14px; border:none; border-radius:8px; background:#34495e; color:white; cursor:pointer;">Continuar e Imprimir</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const textarea = modal.querySelector("#textarea-resumen-impresion");
+    const cerrar = valor => {
+      overlay.remove();
+      resolve(valor);
+    };
+
+    modal.querySelector("#cancelar-resumen-impresion").onclick = () => cerrar(null);
+    modal.querySelector("#aceptar-resumen-impresion").onclick = () => cerrar(textarea.value.trim());
+    overlay.onclick = event => {
+      if (event.target === overlay) cerrar(null);
+    };
+
+    textarea.focus();
+  });
+}
+
+async function imprimirCarta(nombre) {
   const perfil = getPrimerRegistro(nombre);
   if (!perfil) {
     alert("No se encontro la ficha del paciente.");
@@ -605,22 +679,11 @@ function imprimirCarta(nombre) {
   }
 
   const diagnostico = document.getElementById("txt-diagnostico")?.value?.trim() || getDiagnosticoActual(nombre) || "No registrado";
-  const evoluciones = [...(historialPacientes[nombre] || [])].sort((a, b) => b.fecha - a.fecha);
+  const resumenIndicaciones = await solicitarIndicacionesResumen();
+  if (resumenIndicaciones === null) {
+    return;
+  }
   const fechaEmision = new Date().toLocaleDateString("es-CL");
-
-  const contenidoEvoluciones = evoluciones.length
-    ? evoluciones
-        .map((registro, index) => `
-          <section style="margin-bottom:16px; padding:12px; border:1px solid #ddd; border-radius:8px;">
-            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
-              <span>${escapeHtml(registro.tipo || "Evolucion " + (index + 1))}</span>
-              <span>${escapeHtml(registro.fecha ? registro.fecha.toLocaleString("es-CL") : "Sin fecha")}</span>
-            </div>
-            <div>${escapeHtml(registro.evolucion || "Sin registro").replace(/\n/g, "<br>")}</div>
-          </section>
-        `)
-        .join("")
-    : "<p>Sin historial registrado.</p>";
 
   const ventana = window.open("", "_blank", "width=900,height=1200");
   if (!ventana) {
@@ -635,16 +698,33 @@ function imprimirCarta(nombre) {
       <meta charset="UTF-8">
       <title>Ficha - ${escapeHtml(nombre)}</title>
       <style>
-        body { font-family: Arial, sans-serif; color:#111; margin:0; padding:32px; }
+        body { font-family: Arial, sans-serif; color:#111827; margin:0; padding:32px; background:#ffffff; }
         h1, h2 { margin-bottom: 10px; }
-        .seccion { margin-top: 24px; }
+        .seccion { margin-top: 26px; }
         .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        .campo { padding:10px; border:1px solid #ddd; border-radius:8px; }
+        .campo { padding:10px 12px; border:1px solid #d7dee7; border-radius:10px; background:#fbfdff; }
+        .encabezado { display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:18px; border-bottom:3px solid #d9e4ec; }
+        .encabezado img { width:72px; height:72px; object-fit:contain; }
+        .encabezado-texto h1 { margin:0 0 4px; color:#23445a; }
+        .encabezado-texto p { margin:0; color:#5b6b7a; }
+        .fecha-emision { color:#4b5563; margin:0; }
+        .seccion h2 { color:#23445a; border-bottom:1px solid #dbe5ec; padding-bottom:6px; }
+        .pie { margin-top:32px; padding-top:18px; border-top:2px solid #d9e4ec; color:#334155; display:grid; grid-template-columns:1.1fr 1fr; gap:24px; }
+        .pie h3 { margin:0 0 10px; font-size:20px; color:#23445a; }
+        .pie p { margin:0; line-height:1.7; color:#475569; }
+        .pie-contacto h4 { margin:0 0 12px; font-size:18px; color:#23445a; }
+        .pie-contacto div { margin-bottom:10px; color:#334155; }
       </style>
     </head>
     <body>
-      <h1>Ficha Clinica</h1>
-      <p><strong>Fecha de emision:</strong> ${escapeHtml(fechaEmision)}</p>
+      <div class="encabezado">
+        <img src="logoclinica.png" alt="Logo CliniBienVital">
+        <div class="encabezado-texto">
+          <h1>Ficha Clinica</h1>
+          <p>CliniBienVital</p>
+        </div>
+      </div>
+      <p class="fecha-emision"><strong>Fecha de emision:</strong> ${escapeHtml(fechaEmision)}</p>
       <div class="seccion">
         <h2>${escapeHtml(nombre)}</h2>
         <div class="grid">
@@ -662,8 +742,25 @@ function imprimirCarta(nombre) {
         <p>${escapeHtml(diagnostico)}</p>
       </div>
       <div class="seccion">
-        <h2>Historial de atenciones</h2>
-        ${contenidoEvoluciones}
+        <h2>Indicaciones/Resumen</h2>
+        <div class="campo" style="min-height:140px; white-space:pre-wrap;">${escapeHtml(resumenIndicaciones || "").replace(/\n/g, "<br>") || "Sin indicaciones."}</div>
+      </div>
+      <div class="pie">
+        <div>
+          <h3>CliniBienVital</h3>
+          <p>
+            Centro orientado a la atencion integral,
+            la rehabilitacion funcional y el bienestar
+            de cada paciente.
+          </p>
+        </div>
+        <div class="pie-contacto">
+          <h4>Contacto</h4>
+          <div>Telefono: +56 9 9837 7622</div>
+          <div>Correo: clinibienvital@gmail.com</div>
+          <div>Direccion: Av. Echeñique 5037, Ñuñoa, Santiago</div>
+          <div>Web: clinibienvital.cl</div>
+        </div>
       </div>
     </body>
     </html>
@@ -674,3 +771,4 @@ function imprimirCarta(nombre) {
 }
 
 cargarBaseDatos();
+

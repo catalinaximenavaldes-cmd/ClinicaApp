@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -23,13 +23,13 @@
     </header>
 
     <div class="main-content">
-        <button type="button" class="btn-inicio" onclick="window.location.href='index.html'">🏠 Inicio</button>
+        <button type="button" class="btn-inicio" onclick="window.location.href='index.html'">ðŸ  Inicio</button>
         <hr>
         <h2>Ingreso de nuevo paciente</h2>
 
         <div class="container">
             Nombre y Apellido:<br>
-            <input type="text" id="nombre" placeholder="Ej: Juan Pérez">
+            <input type="text" id="nombre" placeholder="Ej: Juan Perez">
         </div><br>
 
         <div class="container">
@@ -44,7 +44,7 @@
         </div><br>
 
         <div class="container">
-            Dirección:<br>
+            DirecciÃ³n:<br>
             <input type="text" id="direccion" placeholder="Calle Falsa 123">
         </div><br>
 
@@ -65,12 +65,12 @@
 
         <div class="container">
             Motivo de consulta:<br>
-            <input type="text" id="motivo_consulta" placeholder="Ej: Dolor lumbar de 3 días de evolución">
+            <input type="text" id="motivo_consulta" placeholder="Ej: Dolor lumbar de 3 dÃ­as de evoluciÃ³n">
         </div><br>
 
-        <button onclick="guardarPaciente()" class="btn-guardar">💾 Guardar Paciente</button>
+        <button onclick="guardarPaciente()" class="btn-guardar">ðŸ’¾ Guardar Paciente</button>
         <br><br>
-        <button onclick="window.history.back()" type="button" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#7f8c8d;">⬅️ Volver atrás</button>
+        <button onclick="window.history.back()" type="button" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#7f8c8d;">â¬…ï¸ Volver atrÃ¡s</button>
     </div>
 
 <script src="url.js"></script>
@@ -82,7 +82,7 @@ function mostrarEdadCalculada(fecha) {
     let edad = hoy.getFullYear() - cumple.getFullYear();
     const m = hoy.getMonth() - cumple.getMonth();
     if (m < 0 || (m === 0 && hoy.getDate() < cumple.getDate())) edad--;
-    document.getElementById("preview_edad").innerText = "Edad estimada: " + edad + " años";
+    document.getElementById("preview_edad").innerText = "Edad estimada: " + edad + " aÃ±os";
 }
 
 function formatearRut(input) {
@@ -110,7 +110,7 @@ async function guardarPaciente() {
     }
 
     const btn = document.querySelector(".btn-guardar");
-    btn.innerText = "⏳ Guardando...";
+    btn.innerText = "â³ Guardando...";
     btn.disabled = true;
 
     const datosPaciente = {
@@ -120,14 +120,9 @@ async function guardarPaciente() {
         direccion: direccion,
         telefono: telefono,
         correo: correo,
+        evolucion: motivoConsulta || "Ingreso inicial registrado",
         tratamiento_activo: tratamientoActivo,
         tratamientoActivo: tratamientoActivo
-    };
-
-    const datosEvolucion = {
-        nombre: nombre,
-        accion: "guardarEvolucionNueva",
-        evolucion: motivoConsulta || "Ingreso inicial registrado"
     };
 
     try {
@@ -137,20 +132,15 @@ async function guardarPaciente() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(datosPaciente)
         });
-        await fetch(CONFIG.API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datosEvolucion)
-        });
-        alert("✅ Paciente guardado con éxito.");
+        alert("âœ… Paciente guardado con Ã©xito.");
         window.location.href = "index.html";
     } catch (error) {
         alert("Error al conectar.");
-        btn.innerText = "💾 Guardar Paciente";
+        btn.innerText = "ðŸ’¾ Guardar Paciente";
         btn.disabled = false;
     }
 }
 </script>
 </body>
 </html>
+
